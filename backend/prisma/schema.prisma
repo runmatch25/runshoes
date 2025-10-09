@@ -1,0 +1,41 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int       @id @default(autoincrement())
+  name      String
+  email     String    @unique
+  password  String
+  weight    Int?
+  pace      Float?
+  reviews   Review[]
+  createdAt DateTime  @default(now())
+}
+
+model Shoe {
+  id         Int       @id @default(autoincrement())
+  brand      String
+  model      String
+  type       String     // e.g. easy, tempo, long run
+  reviews    Review[]
+  createdAt  DateTime   @default(now())
+}
+
+model Review {
+  id         Int       @id @default(autoincrement())
+  rating     Int
+  comment    String
+  shoe       Shoe      @relation(fields: [shoeId], references: [id])
+  shoeId     Int
+  user       User      @relation(fields: [userId], references: [id])
+  userId     Int
+  pace       Float?
+  weight     Int?
+  createdAt  DateTime  @default(now())
+}
