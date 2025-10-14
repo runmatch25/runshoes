@@ -1,22 +1,20 @@
-import type { Metadata } from "next";
-import "./globals.css";
+"use client";
+
+import { ReactNode } from "react";
 import Navbar from "../components/Navbar";
+import { ThemeProvider, createTheme, CssBaseline } from "@mui/material";
 
-export const metadata: Metadata = {
-  title: "RunShoes",
-  description: "User-driven running shoe reviews",
-};
+const theme = createTheme();
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <body style={{ margin: 0, fontFamily: "Inter, sans-serif" }}>
-        <Navbar />
-        <main>{children}</main>
+        <ThemeProvider theme={theme}>
+          <CssBaseline />
+          <Navbar />
+          <main>{children}</main>
+        </ThemeProvider>
       </body>
     </html>
   );

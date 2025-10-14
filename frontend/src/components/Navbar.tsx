@@ -1,4 +1,5 @@
 "use client";
+
 import Link from "next/link";
 import AppBar from "@mui/material/AppBar";
 import Toolbar from "@mui/material/Toolbar";
@@ -24,4 +25,4 @@ export default function Navbar() {
       </Toolbar>
     </AppBar>
   );
-}
+} 
