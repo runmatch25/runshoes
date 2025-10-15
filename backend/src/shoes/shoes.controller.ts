@@ -14,4 +14,15 @@ export class ShoesController {
   async findAll() {
     return this.shoesService.findAll();
   }
+
+  @Post()
+  async createShoe(@Body() data: any) {
+    return this.shoesService.create({
+      data: {
+        brand: data.brand,
+        model: data.model,
+        type: data.type,
+      },
+    });
+  }
 }

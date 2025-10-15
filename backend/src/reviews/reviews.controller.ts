@@ -19,4 +19,18 @@ export class ReviewsController {
   async findByShoe(@Param('shoeId') shoeId: string) {
     return this.reviewsService.findByShoe(Number(shoeId));
   }
+
+  @Post()
+  async createReview(@Body() data: any) {
+    return this.reviewsService.create({
+      data: {
+        rating: Number(data.rating),
+        comment: data.comment,
+        pace: data.pace,
+        weight: data.weight,
+        shoeId: Number(data.shoeId),
+        userId: Number(data.userId),
+      },
+    });
+  }
 }
