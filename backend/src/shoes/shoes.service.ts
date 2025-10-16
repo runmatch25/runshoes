@@ -12,4 +12,8 @@ export class ShoesService {
   async findAll() {
     return this.prisma.shoe.findMany({ include: { reviews: true } });
   }
+
+  async findOne(id: number) {
+    return this.prisma.shoe.findUnique({ where: { id } });
+  }
 }

@@ -1,36 +1,27 @@
-import { Controller, Get, Post, Body, Param } from '@nestjs/common';
+import { Body, Controller, Get, Headers, Param, Post } from '@nestjs/common';
 import { ReviewsService } from './reviews.service';
 
 @Controller('reviews')
 export class ReviewsController {
-  constructor(private readonly reviewsService: ReviewsService) {}
+  constructor(private reviewsService: ReviewsService) {}
 
   @Post()
-  async create(@Body() body: any) {
-    return this.reviewsService.create(body);
-  }
-
-  @Get()
-  async findAll() {
-    return this.reviewsService.findAll();
+  async create(
+    @Headers('authorization') authHeader: string,
+    @Body() body: { shoeId: number; rating: number; comment: string; pace?: number; weight?: number },
+  ) {
+    const token = authHeader?.replace('Bearer ', '');
+    return this.reviewsService.createReview(token, body.shoeId, body.rating, body.comment, body.pace, body.weight);
   }
 
   @Get('shoe/:shoeId')
-  async findByShoe(@Param('shoeId') shoeId: string) {
-    return this.reviewsService.findByShoe(Number(shoeId));
+  async getByShoe(@Param('shoeId') shoeId: string) {
+    return this.reviewsService.getReviewsForShoe(Number(shoeId));
   }
 
-  @Post()
-  async createReview(@Body() data: any) {
-    return this.reviewsService.create({
-      data: {
-        rating: Number(data.rating),
-        comment: data.comment,
-        pace: data.pace,
-        weight: data.weight,
-        shoeId: Number(data.shoeId),
-        userId: Number(data.userId),
-      },
-    });
+  @Get('me')
+  async getMyReviews(@Headers('authorization') authHeader: string) {
+    const token = authHeader?.replace('Bearer ', '');
+    return this.reviewsService.getUserReviews(token);
   }
 }

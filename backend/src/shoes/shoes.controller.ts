@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param } from '@nestjs/common';
 import { ShoesService } from './shoes.service';
 
 @Controller('shoes')
@@ -13,6 +13,11 @@ export class ShoesController {
   @Get()
   async findAll() {
     return this.shoesService.findAll();
+  }
+
+  @Get(':id')
+  async findOne(@Param('id') id: string) {
+    return this.shoesService.findOne(Number(id));
   }
 
   @Post()
