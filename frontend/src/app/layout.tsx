@@ -1,19 +1,29 @@
 "use client";
 
-import { ReactNode } from "react";
-import Navbar from "../components/Navbar";
-import { ThemeProvider, createTheme, CssBaseline } from "@mui/material";
+import { ThemeProvider, CssBaseline, Box } from "@mui/material";
+import theme from "@/theme/theme";
+import Navbar from "@/components/Navbar";
 
-const theme = createTheme();
-
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en">
-      <body style={{ margin: 0, fontFamily: "Inter, sans-serif" }}>
+      <body>
         <ThemeProvider theme={theme}>
           <CssBaseline />
-          <Navbar />
-          <main>{children}</main>
+          <Box
+            sx={{
+              minHeight: "100vh",
+              background: "linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)",
+              color: "#fff",
+            }}
+          >
+            <Navbar />
+            <Box sx={{ p: 4 }}>{children}</Box>
+          </Box>
         </ThemeProvider>
       </body>
     </html>

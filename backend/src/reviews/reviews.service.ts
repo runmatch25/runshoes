@@ -53,4 +53,14 @@ export class ReviewsService {
       include: { shoe: true },
     });
   }
+
+  async getAllReviews() {
+    return this.prisma.review.findMany({
+      include: {
+        user: { select: { id: true, name: true } },
+        shoe: { select: { brand: true, model: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
 }

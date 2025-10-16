@@ -5,6 +5,12 @@ import { ReviewsService } from './reviews.service';
 export class ReviewsController {
   constructor(private reviewsService: ReviewsService) {}
 
+  // Get all reviews (for /reviews)
+  @Get()
+  async getAll() {
+    return this.reviewsService.getAllReviews();
+  }
+
   @Post()
   async create(
     @Headers('authorization') authHeader: string,
