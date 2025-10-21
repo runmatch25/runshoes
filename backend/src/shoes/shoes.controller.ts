@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Query } from '@nestjs/common';
 import { ReviewsService } from '../reviews/reviews.service';
 import { ShoesService } from './shoes.service';
 
@@ -8,35 +8,43 @@ export class ShoesController {
     private readonly shoesService: ShoesService,
     private readonly reviewsService: ReviewsService
   ) {}
-  // Get reviews for a shoe (for /shoes/:shoeId/reviews)
-  @Get(':shoeId/reviews')
-  async getReviewsForShoe(@Param('shoeId') shoeId: string) {
-    return this.reviewsService.getReviewsForShoe(Number(shoeId));
-  }
 
+  // 🟩 Create a new shoe
   @Post()
-  async create(@Body() body: any) {
-    return this.shoesService.create(body);
+  async createShoe(@Body() data: any) {
+    return this.shoesService.create({
+      brand: data.brand,
+      model: data.model,
+      type: data.type,
+    });
   }
 
+  // 🟦 Get all shoes, with optional filters
   @Get()
-  async findAll() {
-    return this.shoesService.findAll();
+  async getFilteredShoes(
+    @Query('type') type?: string,
+    @Query('minRating') minRating?: number,
+  ) {
+    // If no filters are passed, return all shoes
+    if (!type && !minRating) {
+      return this.shoesService.findAll();
+    }
+
+    return this.shoesService.getFilteredShoes({
+      type,
+      minRating: minRating ? Number(minRating) : undefined,
+    });
   }
 
+  // 🟨 Get one shoe by ID
   @Get(':id')
   async findOne(@Param('id') id: string) {
     return this.shoesService.findOne(Number(id));
   }
 
-  @Post()
-  async createShoe(@Body() data: any) {
-    return this.shoesService.create({
-      data: {
-        brand: data.brand,
-        model: data.model,
-        type: data.type,
-      },
-    });
+  // 🟧 Get reviews for a specific shoe
+  @Get(':shoeId/reviews')
+  async getReviewsForShoe(@Param('shoeId') shoeId: string) {
+    return this.reviewsService.getReviewsForShoe(Number(shoeId));
   }
 }
