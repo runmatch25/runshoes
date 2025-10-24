@@ -43,19 +43,24 @@ export default function Navbar() {
           </Button>
 
           {user ? (
-            <Button
-              onClick={logout}
-              sx={{
-                mx: 1,
-                color: "#ff7b7b",
-                border: "1px solid #ff7b7b",
-                "&:hover": {
-                  backgroundColor: "rgba(255,123,123,0.1)",
-                },
-              }}
-            >
-              Logout
-            </Button>
+            <>
+              <Button component={Link} href="/profile" sx={{ mx: 1 }}>
+                Profile
+              </Button>
+              <Button
+                onClick={logout}
+                sx={{
+                  mx: 1,
+                  color: "#ff7b7b",
+                  border: "1px solid #ff7b7b",
+                  "&:hover": {
+                    backgroundColor: "rgba(255,123,123,0.1)",
+                  },
+                }}
+              >
+                Logout
+              </Button>
+            </>
           ) : (
             <Button
               component={Link}

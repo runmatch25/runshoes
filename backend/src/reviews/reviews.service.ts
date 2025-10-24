@@ -51,6 +51,7 @@ export class ReviewsService {
     return this.prisma.review.findMany({
       where: { userId },
       include: { shoe: true },
+      orderBy: { createdAt: 'desc' },
     });
   }
 
@@ -62,5 +63,30 @@ export class ReviewsService {
       },
       orderBy: { createdAt: 'desc' },
     });
+  }
+
+  async updateReview(token: string, reviewId: number, updates: { rating?: number; comment?: string; pace?: number; weight?: number }) {
+    const userId = await this.getUserFromToken(token);
+
+    const existing = await this.prisma.review.findUnique({ where: { id: reviewId } });
+    if (!existing) throw new NotFoundException('Review not found');
+    if (existing.userId !== userId) throw new UnauthorizedException('Not allowed to edit this review');
+
+    return this.prisma.review.update({
+      where: { id: reviewId },
+      data: { ...updates, createdAt: new Date() },
+      include: { user: { select: { id: true, name: true } }, shoe: true },
+    });
+  }
+
+  async deleteReview(token: string, reviewId: number) {
+    const userId = await this.getUserFromToken(token);
+
+    const existing = await this.prisma.review.findUnique({ where: { id: reviewId } });
+    if (!existing) throw new NotFoundException('Review not found');
+    if (existing.userId !== userId) throw new UnauthorizedException('Not allowed to delete this review');
+
+    await this.prisma.review.delete({ where: { id: reviewId } });
+    return { success: true };
   }
 }

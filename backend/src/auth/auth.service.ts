@@ -44,4 +44,14 @@ export class AuthService {
       throw new UnauthorizedException('Invalid token');
     }
   }
+
+  async getUserFromToken(token: string) {
+  const decoded = jwt.verify(token, process.env.JWT_SECRET || "secret") as { userId: number };
+  const user = await this.prisma.user.findUnique({
+    where: { id: decoded.userId },
+    select: { id: true, name: true, email: true },
+  });
+  return user;
+}
+
 }

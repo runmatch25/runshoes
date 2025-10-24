@@ -1,9 +1,16 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post, Headers } from '@nestjs/common';
 import { AuthService } from './auth.service';
 
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
+
+  @Get("me")
+  async getMe(@Headers("authorization") authHeader: string) {
+    const token = authHeader?.replace("Bearer ", "");
+    const user = await this.authService.getUserFromToken(token);
+    return user;
+  }
 
   @Post('register')
   async register(

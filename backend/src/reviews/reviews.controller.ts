@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Headers, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Headers, Param, Post, Patch, Delete } from '@nestjs/common';
 import { ReviewsService } from './reviews.service';
 
 @Controller('reviews')
@@ -29,5 +29,21 @@ export class ReviewsController {
   async getMyReviews(@Headers('authorization') authHeader: string) {
     const token = authHeader?.replace('Bearer ', '');
     return this.reviewsService.getUserReviews(token);
+  }
+
+  @Patch(':id')
+  async updateReview(
+    @Param('id') id: string,
+    @Headers('authorization') authHeader: string,
+    @Body() body: { rating?: number; comment?: string; pace?: number; weight?: number },
+  ) {
+    const token = authHeader?.replace('Bearer ', '');
+    return this.reviewsService.updateReview(token, Number(id), body);
+  }
+
+  @Delete(':id')
+  async deleteReview(@Param('id') id: string, @Headers('authorization') authHeader: string) {
+    const token = authHeader?.replace('Bearer ', '');
+    return this.reviewsService.deleteReview(token, Number(id));
   }
 }

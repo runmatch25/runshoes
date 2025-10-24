@@ -3,7 +3,12 @@
 import { useState } from "react";
 import { Box, Button, Rating, TextField, Typography } from "@mui/material";
 
-export default function ReviewForm({ shoeId }: { shoeId: number }) {
+interface ReviewFormProps {
+  shoeId: number;
+  onReviewAdded: () => void; // callback to refresh reviews
+}
+
+export default function ReviewForm({ shoeId, onReviewAdded }: ReviewFormProps) {
   const [rating, setRating] = useState<number | null>(0);
   const [comment, setComment] = useState("");
 
@@ -14,17 +19,26 @@ export default function ReviewForm({ shoeId }: { shoeId: number }) {
       return;
     }
 
-    const res = await fetch("http://localhost:3001/reviews", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ shoeId, rating, comment }),
-    });
+    try {
+      const res = await fetch("http://localhost:3001/reviews", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ shoeId, rating, comment }),
+      });
 
-    const data = await res.json();
-    alert(data.message || "Review posted!");
+      if (!res.ok) throw new Error("Failed to post review");
+
+      setComment("");
+      setRating(0);
+
+      onReviewAdded(); // refresh reviews
+    } catch (err) {
+      console.error(err);
+      alert("Error submitting review");
+    }
   }
 
   return (
