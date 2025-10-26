@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Simple RunRate placeholder logo in RunMatch Ignite primary color -->
+<svg width="240" height="48" viewBox="0 0 240 48" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="RunRate">
+  <rect width="240" height="48" fill="none" />
+  <g transform="translate(6,6)">
+    <!-- Mark: stylized flame + check -->
+    <path d="M12 0 C18 6 18 12 12 20 C6 12 6 6 12 0 Z" fill="#FF6A00" />
+    <circle cx="12" cy="24" r="6" fill="#0059B2" />
+  </g>
+  <text x="56" y="30" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="700" fill="#0059B2">RunRate</text>
+</svg>

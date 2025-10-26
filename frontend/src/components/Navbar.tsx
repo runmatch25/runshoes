@@ -1,78 +1,60 @@
 "use client";
 
 import { AppBar, Toolbar, Button, Typography, Box } from "@mui/material";
+import Image from "next/image";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
+import { useTheme } from "@mui/material/styles";
 
 export default function Navbar() {
   const { user, logout } = useAuth();
+  const theme = useTheme();
 
   return (
     <AppBar
       position="sticky"
       elevation={0}
       sx={{
-        backdropFilter: "blur(12px)",
-        backgroundColor: "rgba(0, 0, 0, 0.3)",
-        borderBottom: "1px solid rgba(255,255,255,0.1)",
+        // Gradient reversed so blue appears on the right
+        background: "linear-gradient(135deg, #FF6A00 0%, #0059B2 100%)",
+        color: "#fff",
+        borderBottom: "1px solid rgba(0,0,0,0.08)",
       }}
     >
-      <Toolbar sx={{ justifyContent: "space-between" }}>
-        <Typography
-          variant="h5"
-          sx={{
-            fontWeight: 700,
-            letterSpacing: 1,
-            background: "linear-gradient(90deg, #00C9FF 0%, #92FE9D 100%)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-          }}
-        >
-          RunRate
-        </Typography>
+      <Toolbar sx={{ display: "flex", justifyContent: "space-between", gap: 2 }}>
+        {/* Left: Logo / Brand */}
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          <Link href="/" style={{ display: "inline-flex", alignItems: "center" }}>
+            <Image src="/images/logo.svg" alt="RunRate" width={140} height={40} priority />
+          </Link>
+        </Box>
 
-        <Box>
-          <Button component={Link} href="/" sx={{ mx: 1 }}>
+        {/* Middle: Primary nav links */}
+        <Box sx={{ display: { xs: "none", md: "flex" }, gap: 1, alignItems: "center" }}>
+          <Button component={Link} href="/" color="inherit">
             Home
           </Button>
-          <Button component={Link} href="/shoes" sx={{ mx: 1 }}>
+          <Button component={Link} href="/shoes" color="inherit">
             Shoes
           </Button>
-          <Button component={Link} href="/reviews" sx={{ mx: 1 }}>
+          <Button component={Link} href="/reviews" color="inherit">
             Reviews
           </Button>
+        </Box>
 
+        {/* Right: CTA / Auth */}
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           {user ? (
             <>
-              <Button component={Link} href="/profile" sx={{ mx: 1 }}>
+              <Button component={Link} href="/profile" color="inherit" sx={{ color: 'secondary.main' }}>
                 Profile
               </Button>
-              <Button
-                onClick={logout}
-                sx={{
-                  mx: 1,
-                  color: "#ff7b7b",
-                  border: "1px solid #ff7b7b",
-                  "&:hover": {
-                    backgroundColor: "rgba(255,123,123,0.1)",
-                  },
-                }}
-              >
+              <Button onClick={logout} variant="outlined" sx={{ borderColor: "rgba(0,0,0,0.08)", color: 'secondary.main' }}>
                 Logout
               </Button>
             </>
           ) : (
-            <Button
-              component={Link}
-              href="/login"
-              sx={{
-                mx: 1,
-                border: "1px solid rgba(255,255,255,0.3)",
-                "&:hover": {
-                  backgroundColor: "rgba(255,255,255,0.1)",
-                },
-              }}
-            >
+            <Button component={Link} href="/login" variant="contained" color="primary">
               Login
             </Button>
           )}
