@@ -19,13 +19,14 @@ export default function Navbar() {
         background: "linear-gradient(135deg, #FF6A00 0%, #0059B2 100%)",
         color: "#fff",
         borderBottom: "1px solid rgba(0,0,0,0.08)",
+        height: 60,
       }}
     >
       <Toolbar sx={{ display: "flex", justifyContent: "space-between", gap: 2 }}>
         {/* Left: Logo / Brand */}
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
           <Link href="/" style={{ display: "inline-flex", alignItems: "center" }}>
-            <Image src="/images/logo.svg" alt="RunRate" width={140} height={40} priority />
+            <Image src="/images/logo.png" alt="RunRate" width={100} height={100} priority />
           </Link>
         </Box>
 
