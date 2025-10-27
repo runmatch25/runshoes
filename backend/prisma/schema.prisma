@@ -19,12 +19,19 @@ model User {
 }
 
 model Shoe {
-  id         Int       @id @default(autoincrement())
-  brand      String
-  model      String
-  type       String     // e.g. easy, tempo, long run
-  reviews    Review[]
-  createdAt  DateTime   @default(now())
+  id           Int       @id @default(autoincrement())
+  brand        String
+  model        String
+  type         String       // e.g., easy, tempo, long run
+  stackHeight  Float?       // mm
+  drop         Float?       // heel-toe drop in mm
+  weightGrams  Float?       // optional shoe weight in grams
+  releaseYear  Int?
+  category     String?      // neutral / stability / trail
+  imageUrl     String?
+  reviews      Review[]
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt @default(now())
 }
 
 model Review {
