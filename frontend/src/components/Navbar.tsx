@@ -5,59 +5,93 @@ import Image from "next/image";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { useTheme } from "@mui/material/styles";
+import React, { useEffect, useRef, useState } from "react";
 
 export default function Navbar() {
   const { user, logout } = useAuth();
   const theme = useTheme();
+  const [show, setShow] = useState(true);
+  const lastScroll = useRef(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const current = window.scrollY;
+      const goingDown = current > lastScroll.current;
+      if (current < 10) {
+        setShow(true); // Always show at the very top
+      } else if (goingDown && current > 40) {
+        setShow(false);
+      } else if (!goingDown) {
+        setShow(true);
+      }
+      lastScroll.current = current;
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   return (
     <AppBar
-      position="sticky"
+      position="fixed"
       elevation={0}
       sx={{
-        // Gradient reversed so blue appears on the right
-        background: "linear-gradient(135deg, #FF6A00 0%, #0059B2 100%)",
-        color: "#fff",
-        borderBottom: "1px solid rgba(0,0,0,0.08)",
+        background: "transparent",
+        color: "#000",
+        borderBottom: "none",
         height: 60,
+        boxShadow: "none",
+        zIndex: (theme) => theme.zIndex.drawer + 10,
+        transition: "transform 0.4s cubic-bezier(.4,1.3,.4,1)",
+        transform: show ? "translateY(0)" : "translateY(-110%)",
       }}
     >
-      <Toolbar sx={{ display: "flex", justifyContent: "space-between", gap: 2 }}>
-        {/* Left: Logo / Brand */}
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+      <Toolbar sx={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        height: 60,
+        minHeight: 60,
+        position: "relative",
+        paddingX: 4,
+      }}>
+        {/* Far left: Logo */}
+        <Box sx={{ position: "absolute", left: 0, top: 0, bottom: 0, display: "flex", alignItems: "center", height: 60 }}>
           <Link href="/" style={{ display: "inline-flex", alignItems: "center" }}>
-            <Image src="/images/logo.png" alt="RunRate" width={100} height={100} priority />
+            <Image src="/images/logo.png" alt="RunRate" width={93} height={48} priority />
           </Link>
         </Box>
-
-        {/* Middle: Primary nav links */}
-        <Box sx={{ display: { xs: "none", md: "flex" }, gap: 1, alignItems: "center" }}>
-          <Button component={Link} href="/" color="inherit">
-            Home
-          </Button>
-          <Button component={Link} href="/shoes" color="inherit">
-            Shoes
-          </Button>
-          <Button component={Link} href="/reviews" color="inherit">
-            Reviews
-          </Button>
+        {/* Center nav: Shoes, Reviews */}
+        <Box sx={{ position: "absolute", left: '50%', top: 0, bottom: 0, display: "flex", alignItems: "center", gap: 3, height: 60, transform: 'translateX(-50%)' }}>
+          <Link href="/shoes" style={{ color: "#000", textDecoration: "none" }}>
+            <Box sx={{ fontWeight: 600, fontSize: 15, letterSpacing: 1, cursor: "pointer", textTransform: "uppercase", '&:hover': { textDecoration: 'underline' }, color: "#000" }}>
+              Shoes
+            </Box>
+          </Link>
+          <Link href="/reviews" style={{ color: "#000", textDecoration: "none" }}>
+            <Box sx={{ fontWeight: 600, fontSize: 15, letterSpacing: 1, cursor: "pointer", textTransform: "uppercase", '&:hover': { textDecoration: 'underline' }, color: "#000" }}>
+              Reviews
+            </Box>
+          </Link>
         </Box>
-
-        {/* Right: CTA / Auth */}
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        {/* Right nav: Profile/Logout or Login */}
+        <Box sx={{ position: "absolute", right: 0, top: 0, bottom: 0, display: "flex", alignItems: "center", gap: 3, height: 60 }}>
           {user ? (
             <>
-              <Button component={Link} href="/profile" color="inherit" sx={{ color: 'secondary.main' }}>
-                Profile
-              </Button>
-              <Button onClick={logout} variant="outlined" sx={{ borderColor: "rgba(0,0,0,0.08)", color: 'secondary.main' }}>
+              <Link href="/profile" style={{ color: "#000", textDecoration: "none" }}>
+                <Box sx={{ fontWeight: 600, fontSize: 15, letterSpacing: 1, cursor: "pointer", textTransform: "uppercase", '&:hover': { textDecoration: 'underline' }, color: "#000" }}>
+                  Profile
+                </Box>
+              </Link>
+              <Box onClick={logout} sx={{ fontWeight: 600, fontSize: 15, letterSpacing: 1, cursor: "pointer", textTransform: "uppercase", color: "#000", ml: 2, '&:hover': { textDecoration: 'underline' } }}>
                 Logout
-              </Button>
+              </Box>
             </>
           ) : (
-            <Button component={Link} href="/login" variant="contained" color="primary">
-              Login
-            </Button>
+            <Link href="/login" style={{ color: "#000", textDecoration: "none" }}>
+              <Box sx={{ fontWeight: 600, fontSize: 15, letterSpacing: 1, cursor: "pointer", textTransform: "uppercase", '&:hover': { textDecoration: 'underline' }, color: "#000" }}>
+                Login
+              </Box>
+            </Link>
           )}
         </Box>
       </Toolbar>
