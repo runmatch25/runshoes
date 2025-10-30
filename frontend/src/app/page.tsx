@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { fetchShoes } from "../lib/api";
 import { formatDateISOToMMDDYYYY } from "../lib/formatDate";
+import FrontpageCarousel from "@/components/FrontpageCarousel";
+import Footer from "@/components/Footer";
 
 type Shoe = {
   id: number;
@@ -51,33 +53,44 @@ export default async function HomePage() {
     .slice(0, 5);
 
   return (
-    <main style={{ padding: "2rem" }}>
-      <h1>Top 5 Rated Shoes</h1>
+    <main style={{ padding: 0 }}>
+      <FrontpageCarousel />
+      <h1 style={{ textAlign: 'center', marginTop: 24, marginBottom: 18 }}>Top 5 Rated Shoes</h1>
       {top5.length === 0 ? (
-        <p>No shoes available yet.</p>
+        <p style={{ textAlign: 'center' }}>No shoes available yet.</p>
       ) : (
-        <ul style={{ listStyle: "none", padding: 0 }}>
+        <ul style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          justifyContent: 'center',
+          gap: '1.5rem',
+          listStyle: 'none',
+          padding: 0,
+          margin: 0,
+        }}>
           {top5.map((shoe) => (
             <li
               key={shoe.id}
               style={{
-                marginBottom: "1rem",
-                padding: "1rem",
-                borderRadius: 8,
-                background: "rgba(255,255,255,0.02)",
-                border: "1px solid rgba(255,255,255,0.04)",
+                minWidth: 210,
+                maxWidth: 270,
+                flex: '1 1 210px',
+                padding: '1.25rem 1rem',
+                borderRadius: 18,
+                background: '#fff',
+                border: '1px solid #EBEBEB',
+                boxShadow: '0 4px 24px rgba(16,16,16,0.05)',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
               }}
             >
-              <Link
-                href={`/shoes/${shoe.id}`}
-                style={{ textDecoration: "none", color: "inherit" }}
-              >
-                <strong>
+              <Link href={`/shoes/${shoe.id}`} style={{ textDecoration: 'none', color: 'inherit', width: '100%' }}>
+                <strong style={{ fontSize: 18, display: 'block', textAlign: 'center' }}>
                   {shoe.brand} {shoe.model}
                 </strong>
-                  <div style={{ marginTop: 6, color: "#5C5C5C" }}>
-                  {shoe.type} • {shoe.reviews?.length ?? 0} review
-                  {shoe.reviews && shoe.reviews.length !== 1 ? "s" : ""} •{' '}
+                <div style={{ marginTop: 6, color: '#5C5C5C', textAlign: 'center' }}>
+                  {shoe.type} • {shoe.reviews?.length ?? 0} review{shoe.reviews && shoe.reviews.length !== 1 ? "s" : ""} •{' '}
                   <span style={{ fontWeight: 700 }}>{shoe.avg.toFixed(1)}</span> ⭐
                 </div>
               </Link>
@@ -85,30 +98,43 @@ export default async function HomePage() {
           ))}
         </ul>
       )}
-      <section style={{ marginTop: 32 }}>
-        <h2>Most Recently Reviewed Shoes</h2>
+      <section style={{ marginTop: 44 }}>
+        <h2 style={{ textAlign: 'center', marginBottom: 18 }}>Most Recently Reviewed Shoes</h2>
         {recentTop5.length === 0 ? (
-          <p>No recent reviews yet.</p>
+          <p style={{ textAlign: 'center' }}>No recent reviews yet.</p>
         ) : (
-          <ul style={{ listStyle: "none", padding: 0 }}>
+          <ul style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            justifyContent: 'center',
+            gap: '1.5rem',
+            listStyle: 'none',
+            padding: 0,
+            margin: 0,
+          }}>
             {recentTop5.map((shoe) => (
               <li
                 key={shoe.id}
                 style={{
-                  marginBottom: "1rem",
-                  padding: "1rem",
-                  borderRadius: 8,
-                  background: "rgba(255,255,255,0.02)",
-                  border: "1px solid rgba(255,255,255,0.04)",
+                  minWidth: 210,
+                  maxWidth: 270,
+                  flex: '1 1 210px',
+                  padding: '1.25rem 1rem',
+                  borderRadius: 18,
+                  background: '#fff',
+                  border: '1px solid #EBEBEB',
+                  boxShadow: '0 4px 24px rgba(16,16,16,0.045)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
                 }}
               >
-                <Link href={`/shoes/${shoe.id}`} style={{ textDecoration: "none", color: "inherit" }}>
-                  <strong>
+                <Link href={`/shoes/${shoe.id}`} style={{ textDecoration: 'none', color: 'inherit', width: '100%' }}>
+                  <strong style={{ fontSize: 18, display: 'block', textAlign: 'center' }}>
                     {shoe.brand} {shoe.model}
                   </strong>
-                    <div style={{ marginTop: 6, color: "#5C5C5C" }}>
-                    {shoe.type} • {shoe.reviews?.length ?? 0} review
-                    {shoe.reviews && shoe.reviews.length !== 1 ? "s" : ""} •{' '}
+                  <div style={{ marginTop: 6, color: '#5C5C5C', textAlign: 'center' }}>
+                    {shoe.type} • {shoe.reviews?.length ?? 0} review{shoe.reviews && shoe.reviews.length !== 1 ? "s" : ""} •{' '}
                     <span style={{ fontWeight: 700 }}>{formatDateISOToMMDDYYYY(shoe.latestReviewISO)}</span>
                   </div>
                 </Link>
@@ -117,6 +143,7 @@ export default async function HomePage() {
           </ul>
         )}
       </section>
+      <Footer />
     </main>
   );
 }
