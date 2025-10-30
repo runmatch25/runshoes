@@ -7,6 +7,25 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// New enums for richer review data
+enum Fit {
+  SMALL
+  TRUE_TO_SIZE
+  BIG
+}
+
+enum Cushion {
+  SOFT
+  BALANCED
+  FIRM
+}
+
+enum Stability {
+  NEUTRAL
+  MODERATE_SUPPORT
+  HIGH_SUPPORT
+}
+
 model User {
   id        Int       @id @default(autoincrement())
   name      String
@@ -42,7 +61,15 @@ model Review {
   shoeId     Int
   user       User      @relation(fields: [userId], references: [id])
   userId     Int
+  // legacy aggregate pace in min/km or min/mi
   pace       Float?
+  // new structured fields
+  fit        Fit
+  cushion    Cushion
+  stability  Stability
+  mileage    Int?        // total miles/kilometers logged on the shoe
+  paceMinutes Int?
+  paceSeconds Int?
   weight     Int?
   createdAt  DateTime  @default(now())
 }

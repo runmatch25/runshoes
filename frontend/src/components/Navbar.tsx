@@ -1,11 +1,14 @@
 "use client";
 
 import { AppBar, Toolbar, Button, Typography, Box } from "@mui/material";
-import Image from "next/image";
+// import Image from "next/image";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { useTheme } from "@mui/material/styles";
 import React, { useEffect, useRef, useState } from "react";
+import { Bitcount_Grid_Single } from 'next/font/google';
+
+const bitcount = Bitcount_Grid_Single({ subsets: ['latin'], weight: '400' });
 
 export default function Navbar() {
   const { user, logout } = useAuth();
@@ -54,13 +57,15 @@ export default function Navbar() {
         position: "relative",
         paddingX: 4,
       }}>
-        {/* Far left: Logo */}
+        {/* Far left: Logo (text) */}
         <Box sx={{ position: "absolute", left: 0, top: 0, bottom: 0, display: "flex", alignItems: "center", height: 60 }}>
-          <Link href="/" style={{ display: "inline-flex", alignItems: "center" }}>
-            <Image src="/images/logo.png" alt="RunRate" width={93} height={48} priority />
+          <Link href="/" style={{ color: "#000", textDecoration: "none" }}>
+            <Box className={bitcount.className} sx={{ fontSize: 34, lineHeight: 1, letterSpacing: 1, color: "#000", pl: 2 }}>
+              RUNRATED
+            </Box>
           </Link>
         </Box>
-        {/* Center nav: Shoes, Reviews */}
+        {/* Center nav: Shoes, Reviews, Review Shoe */}
         <Box sx={{ position: "absolute", left: '50%', top: 0, bottom: 0, display: "flex", alignItems: "center", gap: 3, height: 60, transform: 'translateX(-50%)' }}>
           <Link href="/shoes" style={{ color: "#000", textDecoration: "none" }}>
             <Box sx={{ fontWeight: 600, fontSize: 15, letterSpacing: 1, cursor: "pointer", textTransform: "uppercase", '&:hover': { textDecoration: 'underline' }, color: "#000" }}>
@@ -70,6 +75,11 @@ export default function Navbar() {
           <Link href="/reviews" style={{ color: "#000", textDecoration: "none" }}>
             <Box sx={{ fontWeight: 600, fontSize: 15, letterSpacing: 1, cursor: "pointer", textTransform: "uppercase", '&:hover': { textDecoration: 'underline' }, color: "#000" }}>
               Reviews
+            </Box>
+          </Link>
+          <Link href="/review" style={{ color: "#000", textDecoration: "none" }}>
+            <Box sx={{ fontWeight: 600, fontSize: 15, letterSpacing: 1, cursor: "pointer", textTransform: "uppercase", '&:hover': { textDecoration: 'underline' }, color: "#000" }}>
+              Review Shoe
             </Box>
           </Link>
         </Box>

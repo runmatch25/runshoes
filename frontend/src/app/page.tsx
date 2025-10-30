@@ -55,6 +55,51 @@ export default async function HomePage() {
   return (
     <main style={{ padding: 0 }}>
       <FrontpageCarousel />
+
+      {/* Review Promo Section */}
+      <section style={{
+        padding: '56px 16px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}>
+        <div style={{ maxWidth: 880, textAlign: 'center' }}>
+          <h1 style={{
+            margin: 0,
+            fontSize: 48,
+            fontWeight: 800,
+            letterSpacing: 0.5,
+            lineHeight: 1.15,
+          }}>
+            Join Thousands of Runners Improving Their Training
+          </h1>
+          <p style={{
+            marginTop: 14,
+            fontSize: 18,
+            color: '#6b7280',
+            lineHeight: 1.6,
+          }}>
+            Your experience helps others make smarter choices. Review your shoes, compare results, and see which models perform best across different paces and distances.
+          </p>
+          <div style={{ marginTop: 20 }}>
+            <Link href="/review" style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 8,
+              background: '#f57c00',
+              color: '#fff',
+              borderRadius: 9999,
+              padding: '12px 20px',
+              textDecoration: 'none',
+              fontWeight: 700,
+            }}>
+              Review your shoe
+              <span style={{ display: 'inline-block', transform: 'translateY(1px)' }}>➜</span>
+            </Link>
+          </div>
+        </div>
+      </section>
+
       <h1 style={{ textAlign: 'center', marginTop: 24, marginBottom: 18 }}>Top 5 Rated Shoes</h1>
       {top5.length === 0 ? (
         <p style={{ textAlign: 'center' }}>No shoes available yet.</p>
