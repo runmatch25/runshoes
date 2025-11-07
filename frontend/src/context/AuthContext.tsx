@@ -3,10 +3,19 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
+interface AuthUser {
+  id?: number;
+  name?: string;
+  email?: string;
+  weight?: number | null;
+  pace?: number | null;
+  [key: string]: unknown;
+}
+
 interface AuthContextType {
   isLoggedIn: boolean;
-  user: any | null;
-  login: (token: string, userData?: any) => void;
+  user: AuthUser | null;
+  login: (token: string, userData?: AuthUser) => void;
   logout: () => void;
 }
 
@@ -19,7 +28,7 @@ const AuthContext = createContext<AuthContextType>({
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [user, setUser] = useState<any | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -31,7 +40,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const login = (token: string, userData?: any) => {
+  const login = (token: string, userData?: AuthUser) => {
     localStorage.setItem("token", token);
     if (userData) {
       localStorage.setItem("user", JSON.stringify(userData));

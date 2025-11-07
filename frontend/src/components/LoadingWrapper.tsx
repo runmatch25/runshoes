@@ -1,26 +1,18 @@
 // REMOVE "use client"
 import { ReactNode } from "react";
-import CircularProgress from "@mui/material/CircularProgress";
-import Box from "@mui/material/Box";
+import { Loader2 } from "lucide-react";
 
-interface Props {
-  data: any;
-  children: (data: any) => ReactNode;
+interface LoadingWrapperProps<TData> {
+  data: TData | null | undefined;
+  children: (data: TData) => ReactNode;
 }
 
-export default function LoadingWrapper({ data, children }: Props) {
-  if (!data) {
+export default function LoadingWrapper<TData>({ data, children }: LoadingWrapperProps<TData>) {
+  if (data === null || data === undefined) {
     return (
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "50vh",
-        }}
-      >
-        <CircularProgress />
-      </Box>
+      <div className="flex h-[50vh] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
     );
   }
 

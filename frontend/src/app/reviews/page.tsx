@@ -1,13 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Box, Typography, Card, CardContent, Rating, IconButton } from "@mui/material";
 import { formatDateISOToMMDDYYYY } from "@/lib/formatDate";
 import { useAuth } from '@/context/AuthContext';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
 import EditReviewDialog from '@/components/EditReviewDialog';
 import ConfirmDialog from '@/components/ConfirmDialog';
+import ReviewCard from '@/components/ReviewCard';
 
 interface Review {
   id: number;
@@ -15,7 +13,8 @@ interface Review {
   comment: string;
   createdAt?: string | null;
   user: { id?: number; name: string };
-  shoe: { brand: string; model: string };
+  shoe: { id?: number; brand: string; model: string };
+  shoeId?: number;
 }
 
 export default function ReviewsPage() {
@@ -56,55 +55,24 @@ export default function ReviewsPage() {
   }
 
   return (
-    <Box sx={{ display: "grid", gap: 4, gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", mt: 4 }}>
+    <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {reviews.map((review) => (
-        <Card
+        <ReviewCard
           key={review.id}
-          sx={{
-            position: "relative",
-            backdropFilter: "blur(12px)",
-            backgroundColor: "rgba(255,255,255,0.05)",
-            border: "1px solid rgba(255,255,255,0.1)",
-            transition: "transform 0.3s, box-shadow 0.3s",
-            "&:hover": {
-              transform: "translateY(-5px)",
-              boxShadow: "0 8px 30px rgba(146, 254, 157, 0.4)",
-            },
-          }}
-        >
-          <CardContent sx={{ pb: 6 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Typography variant="subtitle2" sx={{ opacity: 0.7 }}>
-                {review.user.name} reviewed {review.shoe.brand} {review.shoe.model}
-              </Typography>
-              {user?.id && review.user.id === user.id && (
-                <Box>
-                  <IconButton size="small" onClick={() => setEditing({ id: review.id, rating: review.rating, comment: review.comment })}>
-                    <EditIcon fontSize="small" />
-                  </IconButton>
-                  <IconButton size="small" onClick={() => openConfirm(review.id)}>
-                    <DeleteIcon fontSize="small" />
-                  </IconButton>
-                </Box>
-              )}
-            </Box>
-            <Rating value={review.rating} readOnly sx={{ mt: 1 }} />
-            <Typography variant="body2" sx={{ mt: 1, opacity: 0.9 }}>
-              {review.comment}
-            </Typography>
-          </CardContent>
-          <Typography
-            variant="caption"
-            sx={{
-              position: "absolute",
-              right: 12,
-              bottom: 10,
-              color: "rgba(255,255,255,0.7)",
-            }}
-          >
-            {formatDateISOToMMDDYYYY(review.createdAt)}
-          </Typography>
-        </Card>
+          id={review.id}
+          rating={review.rating}
+          comment={review.comment}
+          createdAt={review.createdAt}
+          userName={review.user.name}
+          shoeBrand={review.shoe.brand}
+          shoeModel={review.shoe.model}
+          formattedDate={formatDateISOToMMDDYYYY(review.createdAt)}
+          canEdit={user?.id !== undefined && review.user.id === user.id}
+          onEdit={() => setEditing({ id: review.id, rating: review.rating, comment: review.comment })}
+          onDelete={() => openConfirm(review.id)}
+          showLink={!!(review.shoeId || review.shoe.id)}
+          shoeId={review.shoeId || review.shoe.id}
+        />
       ))}
       <EditReviewDialog open={Boolean(editing)} onClose={() => setEditing(null)} review={editing} onSaved={() => fetchReviews()} />
       <ConfirmDialog
@@ -114,6 +82,6 @@ export default function ReviewsPage() {
         onConfirm={handleConfirmDelete}
         onClose={() => setConfirmOpen({ open: false })}
       />
-    </Box>
+    </div>
   );
 }

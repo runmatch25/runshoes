@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { fetchShoes } from "../lib/api";
-import { formatDateISOToMMDDYYYY } from "../lib/formatDate";
 import FrontpageCarousel from "@/components/FrontpageCarousel";
 import Footer from "@/components/Footer";
+import ShoeCard from "@/components/ShoeCard";
+import RecentReviewsCarousel from "@/components/RecentReviewsCarousel";
 
 type Shoe = {
   id: number;
@@ -48,9 +49,9 @@ export default async function HomePage() {
     }))
     .filter((s) => s.latestReviewISO !== null) as (Shoe & { latestReviewISO: string })[];
 
-  const recentTop5 = withLatest
+  const recentTop10 = withLatest
     .sort((a, b) => new Date(b.latestReviewISO).getTime() - new Date(a.latestReviewISO).getTime())
-    .slice(0, 5);
+    .slice(0, 10);
 
   return (
     <main style={{ padding: 0 }}>
@@ -70,13 +71,14 @@ export default async function HomePage() {
             fontWeight: 800,
             letterSpacing: 0.5,
             lineHeight: 1.15,
+            color: 'var(--foreground)',
           }}>
             Join Thousands of Runners Improving Their Training
           </h1>
           <p style={{
             marginTop: 14,
             fontSize: 18,
-            color: '#6b7280',
+            color: 'var(--muted-foreground)',
             lineHeight: 1.6,
           }}>
             Your experience helps others make smarter choices. Review your shoes, compare results, and see which models perform best across different paces and distances.
@@ -86,8 +88,8 @@ export default async function HomePage() {
               display: 'inline-flex',
               alignItems: 'center',
               gap: 8,
-              background: '#f57c00',
-              color: '#fff',
+              background: 'var(--primary)',
+              color: 'var(--primary-foreground)',
               borderRadius: 9999,
               padding: '12px 20px',
               textDecoration: 'none',
@@ -100,9 +102,9 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <h1 style={{ textAlign: 'center', marginTop: 24, marginBottom: 18 }}>Top 5 Rated Shoes</h1>
+      <h1 style={{ textAlign: 'center', marginTop: 24, marginBottom: 18, color: 'var(--foreground)' }}>Top 5 Rated Shoes</h1>
       {top5.length === 0 ? (
-        <p style={{ textAlign: 'center' }}>No shoes available yet.</p>
+        <p style={{ textAlign: 'center', color: 'var(--foreground)' }}>No shoes available yet.</p>
       ) : (
         <ul style={{
           display: 'flex',
@@ -112,6 +114,7 @@ export default async function HomePage() {
           listStyle: 'none',
           padding: 0,
           margin: 0,
+          alignItems: 'stretch',
         }}>
           {top5.map((shoe) => (
             <li
@@ -120,72 +123,32 @@ export default async function HomePage() {
                 minWidth: 210,
                 maxWidth: 270,
                 flex: '1 1 210px',
-                padding: '1.25rem 1rem',
-                borderRadius: 18,
-                background: '#fff',
-                border: '1px solid #EBEBEB',
-                boxShadow: '0 4px 24px rgba(16,16,16,0.05)',
                 display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
               }}
             >
-              <Link href={`/shoes/${shoe.id}`} style={{ textDecoration: 'none', color: 'inherit', width: '100%' }}>
-                <strong style={{ fontSize: 18, display: 'block', textAlign: 'center' }}>
-                  {shoe.brand} {shoe.model}
-                </strong>
-                <div style={{ marginTop: 6, color: '#5C5C5C', textAlign: 'center' }}>
-                  {shoe.type} • {shoe.reviews?.length ?? 0} review{shoe.reviews && shoe.reviews.length !== 1 ? "s" : ""} •{' '}
-                  <span style={{ fontWeight: 700 }}>{shoe.avg.toFixed(1)}</span> ⭐
-                </div>
-              </Link>
+              <ShoeCard
+                id={shoe.id}
+                brand={shoe.brand}
+                model={shoe.model}
+                type={shoe.type}
+                reviews={shoe.reviews}
+                avgRating={shoe.avg}
+              />
             </li>
           ))}
         </ul>
       )}
       <section style={{ marginTop: 44 }}>
-        <h2 style={{ textAlign: 'center', marginBottom: 18 }}>Most Recently Reviewed Shoes</h2>
-        {recentTop5.length === 0 ? (
-          <p style={{ textAlign: 'center' }}>No recent reviews yet.</p>
+        <h2 style={{ textAlign: 'center', marginBottom: 18, color: 'var(--foreground)' }}>Most Recently Reviewed Shoes</h2>
+        {recentTop10.length === 0 ? (
+          <p style={{ textAlign: 'center', color: 'var(--foreground)' }}>No recent reviews yet.</p>
         ) : (
-          <ul style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            justifyContent: 'center',
-            gap: '1.5rem',
-            listStyle: 'none',
-            padding: 0,
-            margin: 0,
-          }}>
-            {recentTop5.map((shoe) => (
-              <li
-                key={shoe.id}
-                style={{
-                  minWidth: 210,
-                  maxWidth: 270,
-                  flex: '1 1 210px',
-                  padding: '1.25rem 1rem',
-                  borderRadius: 18,
-                  background: '#fff',
-                  border: '1px solid #EBEBEB',
-                  boxShadow: '0 4px 24px rgba(16,16,16,0.045)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                }}
-              >
-                <Link href={`/shoes/${shoe.id}`} style={{ textDecoration: 'none', color: 'inherit', width: '100%' }}>
-                  <strong style={{ fontSize: 18, display: 'block', textAlign: 'center' }}>
-                    {shoe.brand} {shoe.model}
-                  </strong>
-                  <div style={{ marginTop: 6, color: '#5C5C5C', textAlign: 'center' }}>
-                    {shoe.type} • {shoe.reviews?.length ?? 0} review{shoe.reviews && shoe.reviews.length !== 1 ? "s" : ""} •{' '}
-                    <span style={{ fontWeight: 700 }}>{formatDateISOToMMDDYYYY(shoe.latestReviewISO)}</span>
-                  </div>
-                </Link>
-              </li>
-            ))}
-          </ul>
+          <RecentReviewsCarousel
+            shoes={recentTop10.map((shoe) => ({
+              ...shoe,
+              latestReviewISO: shoe.latestReviewISO,
+            }))}
+          />
         )}
       </section>
       <Footer />

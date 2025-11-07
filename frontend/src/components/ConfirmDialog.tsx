@@ -1,7 +1,15 @@
 "use client";
 
 import React from "react";
-import { Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Button } from "@mui/material";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -13,15 +21,21 @@ interface ConfirmDialogProps {
 
 export default function ConfirmDialog({ open, title = "Are you sure?", description = "This action cannot be undone.", onConfirm, onClose }: ConfirmDialogProps) {
   return (
-    <Dialog open={open} onClose={onClose} aria-labelledby="confirm-dialog-title">
-      <DialogTitle id="confirm-dialog-title">{title}</DialogTitle>
+    <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) onClose(); }}>
       <DialogContent>
-        <DialogContentText>{description}</DialogContentText>
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>{description}</DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button variant="destructive" onClick={onConfirm}>
+            Delete
+          </Button>
+        </DialogFooter>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button color="error" variant="contained" onClick={onConfirm}>Delete</Button>
-      </DialogActions>
     </Dialog>
   );
 }

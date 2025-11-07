@@ -23,9 +23,9 @@ export class ReviewsService {
       rating: number;
       comment: string;
       pace?: number;
-      fit: 'SMALL' | 'TRUE_TO_SIZE' | 'BIG';
-      cushion: 'SOFT' | 'BALANCED' | 'FIRM';
-      stability: 'NEUTRAL' | 'MODERATE_SUPPORT' | 'HIGH_SUPPORT';
+      fit?: 'SMALL' | 'TRUE_TO_SIZE' | 'BIG';
+      cushion?: 'SOFT' | 'BALANCED' | 'FIRM';
+      stability?: 'NEUTRAL' | 'MODERATE_SUPPORT' | 'HIGH_SUPPORT';
       mileage?: number;
       paceMinutes?: number;
       paceSeconds?: number;
@@ -45,9 +45,9 @@ export class ReviewsService {
         shoeId: data.shoeId,
         userId,
         pace: data.pace,
-        fit: data.fit as any,
-        cushion: data.cushion as any,
-        stability: data.stability as any,
+        fit: data.fit ? (data.fit as any) : undefined,
+        cushion: data.cushion ? (data.cushion as any) : undefined,
+        stability: data.stability ? (data.stability as any) : undefined,
         mileage: data.mileage,
         paceMinutes: data.paceMinutes,
         paceSeconds: data.paceSeconds,
@@ -80,7 +80,7 @@ export class ReviewsService {
     return this.prisma.review.findMany({
       include: {
         user: { select: { id: true, name: true } },
-        shoe: { select: { brand: true, model: true } },
+        shoe: { select: { id: true, brand: true, model: true } },
       },
       orderBy: { createdAt: 'desc' },
     });

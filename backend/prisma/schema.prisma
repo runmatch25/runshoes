@@ -64,9 +64,9 @@ model Review {
   // legacy aggregate pace in min/km or min/mi
   pace       Float?
   // new structured fields
-  fit        Fit
-  cushion    Cushion
-  stability  Stability
+  fit        Fit?
+  cushion    Cushion?
+  stability  Stability?
   mileage    Int?        // total miles/kilometers logged on the shoe
   paceMinutes Int?
   paceSeconds Int?

@@ -1,14 +1,14 @@
 "use client";
 
 import React from "react";
-import { ThemeProvider, CssBaseline, Box } from "@mui/material";
-import theme from "@/theme/igniteTheme";
 import Navbar from "@/components/Navbar";
 import { AuthProvider } from "@/context/AuthContext";
-import { Press_Start_2P, VT323 } from "next/font/google";
+import { Inter, Playfair_Display, JetBrains_Mono } from "next/font/google";
+import "./globals.css";
 
-const pressStart = Press_Start_2P({ subsets: ["latin"], weight: "400", display: "swap", variable: "--font-press-start" });
-const vt323 = VT323({ subsets: ["latin"], weight: "400", display: "swap", variable: "--font-vt323" });
+const inter = Inter({ subsets: ["latin"], display: "swap", variable: "--font-sans" });
+const playfairDisplay = Playfair_Display({ subsets: ["latin"], display: "swap", variable: "--font-serif" });
+const jetbrainsMono = JetBrains_Mono({ subsets: ["latin"], display: "swap", variable: "--font-mono" });
 
 export default function RootLayout({
   children,
@@ -16,24 +16,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${pressStart.variable} ${vt323.variable}`}>
+    <html lang="en" className={`${inter.variable} ${playfairDisplay.variable} ${jetbrainsMono.variable}`}>
       <body>
-        <ThemeProvider theme={theme}>
-          <CssBaseline />
-          <AuthProvider>
-            <Box
-              sx={{
-                minHeight: "100vh",
-                background: theme.palette.background.default || "#0b0c10",
-                color: theme.palette.text.primary,
-                paddingBottom: 8,
-              }}
-            >
-              <Navbar />
-              {children}
-            </Box>
-          </AuthProvider>
-        </ThemeProvider>
+        <AuthProvider>
+          <div className="min-h-screen bg-background text-foreground pb-8 pt-20 md:pt-24">
+            <Navbar />
+            {children}
+          </div>
+        </AuthProvider>
       </body>
     </html>
   );

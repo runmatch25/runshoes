@@ -1,55 +1,32 @@
 import Link from "next/link";
-import { Box } from "@mui/material";
-
-const iconStyle = { width: 28, height: 28, marginRight: 12, verticalAlign: 'middle', filter: 'invert(1)' };
+import { Facebook, Instagram, Twitter } from "lucide-react";
 
 export default function Footer() {
   return (
-    <Box sx={{
-      width: '100%',
-      bgcolor: '#000',
-      color: '#fff',
-      py: { xs: 6, sm: 8 },
-      mt: 10,
-      px: 0,
-      borderTop: '1px solid #222',
-      display: 'flex',
-      flexDirection: { xs: 'column', md: 'row' },
-      justifyContent: 'space-around',
-      alignItems: { xs: 'flex-start', md: 'center' },
-      gap: { xs: 4, md: 0 },
-      fontSize: 16,
-    }}>
-      {/* 1st column */}
-      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: { xs: 'flex-start', md: 'center' }, gap: 2 }}>
-        <Link href="/shoes" style={{ color: '#fff', textDecoration: 'none' }}>
-          <Box sx={{ cursor: 'pointer', fontWeight: 500, letterSpacing: '.5px', textTransform: 'uppercase', fontSize: 15, borderBottom: '2px solid transparent', transition: 'border 0.2s', '&:hover': { borderBottom: '2px solid #fff' } }}>Shoes</Box>
-        </Link>
-        <Link href="/reviews" style={{ color: '#fff', textDecoration: 'none' }}>
-          <Box sx={{ cursor: 'pointer', fontWeight: 500, letterSpacing: '.5px', textTransform: 'uppercase', fontSize: 15, borderBottom: '2px solid transparent', transition: 'border 0.2s', '&:hover': { borderBottom: '2px solid #fff' } }}>Reviews</Box>
-        </Link>
-        <Link href="/profile" style={{ color: '#fff', textDecoration: 'none' }}>
-          <Box sx={{ cursor: 'pointer', fontWeight: 500, letterSpacing: '.5px', textTransform: 'uppercase', fontSize: 15, borderBottom: '2px solid transparent', transition: 'border 0.2s', '&:hover': { borderBottom: '2px solid #fff' } }}>Profile</Box>
-        </Link>
-      </Box>
-      {/* 2nd column */}
-      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: { xs: 'flex-start', md: 'center' }, gap: 2 }}>
-        <Link href="/legal" style={{ color: '#fff', textDecoration: 'none' }}>
-          <Box sx={{ cursor: 'pointer', fontWeight: 500, fontSize: 15, textDecoration: 'underline' }}>Legal Disclaimer</Box>
-        </Link>
-        <Link href="/privacy" style={{ color: '#fff', textDecoration: 'none' }}>
-          <Box sx={{ cursor: 'pointer', fontWeight: 500, fontSize: 15, textDecoration: 'underline' }}>Privacy Policy</Box>
-        </Link>
-        <Link href="/about" style={{ color: '#fff', textDecoration: 'none' }}>
-          <Box sx={{ cursor: 'pointer', fontWeight: 500, fontSize: 15, textDecoration: 'underline' }}>About Page</Box>
-        </Link>
-      </Box>
-      {/* 3rd column: Social icons */}
-      <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 2, mt: { xs: 2, md: 0 } }}>
-        <a href="#" aria-label="Instagram"><img style={iconStyle} src="https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/instagram.svg" alt="Instagram" /></a>
-        <a href="#" aria-label="Twitter"><img style={iconStyle} src="https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/twitter.svg" alt="Twitter" /></a>
-        <a href="#" aria-label="Facebook"><img style={iconStyle} src="https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/facebook.svg" alt="Facebook" /></a>
-      </Box>
-    </Box>
+    <footer className="mt-10 w-full border-t border-border bg-card text-card-foreground">
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-6 py-10 text-sm md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-col gap-3 uppercase tracking-[0.18em] text-xs">
+          <Link href="/shoes" className="transition hover:text-foreground">Shoes</Link>
+          <Link href="/reviews" className="transition hover:text-foreground">Reviews</Link>
+          <Link href="/profile" className="transition hover:text-foreground">Profile</Link>
+        </div>
+        <div className="flex flex-col gap-3 text-sm">
+          <Link href="/legal" className="underline-offset-4 hover:underline">Legal Disclaimer</Link>
+          <Link href="/privacy" className="underline-offset-4 hover:underline">Privacy Policy</Link>
+          <Link href="/about" className="underline-offset-4 hover:underline">About Page</Link>
+        </div>
+        <div className="flex items-center gap-4 text-card-foreground/80">
+          <a href="#" aria-label="Instagram" className="transition hover:text-card-foreground">
+            <Instagram className="h-6 w-6" />
+          </a>
+          <a href="#" aria-label="Twitter" className="transition hover:text-card-foreground">
+            <Twitter className="h-6 w-6" />
+          </a>
+          <a href="#" aria-label="Facebook" className="transition hover:text-card-foreground">
+            <Facebook className="h-6 w-6" />
+          </a>
+        </div>
+      </div>
+    </footer>
   );
 }

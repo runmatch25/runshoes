@@ -1,15 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Box, Typography, Divider, IconButton } from "@mui/material";
+import { useCallback, useEffect, useState } from "react";
 import { formatDateISOToMMDDYYYY } from "@/lib/formatDate";
-import Rating from "@mui/material/Rating";
 import ReviewForm from "@/components/ReviewForm";
 import { useAuth } from "@/context/AuthContext";
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import EditReviewDialog from '@/components/EditReviewDialog';
+import { StarRating } from "@/components/StarRating";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Pencil, Trash2 } from "lucide-react";
 
 interface Review {
   id: number;
@@ -33,7 +33,7 @@ export default function ShoeClient({ shoeId }: { shoeId: number }) {
   const [editing, setEditing] = useState<{ id: number; rating: number; comment: string } | null>(null);
   const [confirmOpen, setConfirmOpen] = useState<{ open: boolean; id?: number }>({ open: false });
 
-  async function fetchShoe() {
+  const fetchShoe = useCallback(async () => {
     try {
       const resShoe = await fetch(`http://localhost:3001/shoes/${shoeId}`);
       const shoeData: Shoe = await resShoe.json();
@@ -41,9 +41,9 @@ export default function ShoeClient({ shoeId }: { shoeId: number }) {
     } catch (err) {
       console.error(err);
     }
-  }
+  }, [shoeId]);
 
-  async function fetchReviews() {
+  const fetchReviews = useCallback(async () => {
     try {
       const resReviews = await fetch(`http://localhost:3001/reviews/shoe/${shoeId}`);
       const reviewData: Review[] = await resReviews.json();
@@ -51,12 +51,12 @@ export default function ShoeClient({ shoeId }: { shoeId: number }) {
     } catch (err) {
       console.error(err);
     }
-  }
+  }, [shoeId]);
 
   useEffect(() => {
     fetchShoe();
     fetchReviews();
-  }, [shoeId]);
+  }, [fetchReviews, fetchShoe]);
 
   function openConfirm(id: number) {
     setConfirmOpen({ open: true, id });
@@ -75,7 +75,7 @@ export default function ShoeClient({ shoeId }: { shoeId: number }) {
     else alert('Failed to delete review');
   }
 
-  if (!shoe) return <Typography>Loading...</Typography>;
+  if (!shoe) return <div className="text-foreground">Loading...</div>;
 
   // Calculate average rating
   const averageRating =
@@ -84,42 +84,60 @@ export default function ShoeClient({ shoeId }: { shoeId: number }) {
       : 0;
 
   return (
-    <Box p={4}>
-      <Typography variant="h4">{shoe.brand} {shoe.model}</Typography>
-      <Divider sx={{ my: 2 }} />
+    <div className="space-y-6">
+      <div className="space-y-2">
+        <h1 className="text-2xl font-bold text-foreground">{shoe.brand} {shoe.model}</h1>
+        <div className="flex items-center gap-2">
+          <StarRating value={averageRating} readOnly size="lg" />
+          <span className="text-sm text-muted-foreground">
+            {averageRating > 0 ? averageRating.toFixed(1) : "No ratings yet"}
+          </span>
+        </div>
+      </div>
 
-      {/* Average Rating Display */}
-      <Box display="flex" alignItems="center" mb={2}>
-        <Rating value={averageRating} precision={0.1} readOnly />
-        <Typography variant="body1" ml={1}>
-          {averageRating > 0 ? averageRating.toFixed(1) : "No ratings yet"}
-        </Typography>
-      </Box>
-
-      <Typography variant="h5" gutterBottom>Reviews</Typography>
-      {reviews.length === 0 && <Typography>No reviews yet.</Typography>}
-      {reviews.map((r) => (
-        <Box key={r.id} mb={2} sx={{ position: 'relative', p: 2, borderRadius: 1, backgroundColor: 'rgba(255,255,255,0.02)' }}>
-          <Box sx={{ pb: 4 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Typography variant="subtitle2">{r.user.name} — {r.rating}/5</Typography>
-              {user?.id === r.user.id && (
-                <Box>
-                  <IconButton size="small" onClick={() => setEditing({ id: r.id, rating: r.rating, comment: r.comment })}>
-                    <EditIcon fontSize="small" />
-                  </IconButton>
-                  <IconButton size="small" onClick={() => openConfirm(r.id)}>
-                    <DeleteIcon fontSize="small" />
-                  </IconButton>
-                </Box>
-              )}
-            </Box>
-            <Typography variant="body2">{r.comment}</Typography>
-            <Divider sx={{ my: 1 }} />
-          </Box>
-          <Typography variant="caption" sx={{ position: 'absolute', right: 12, bottom: 8, color: 'rgba(255,255,255,0.7)' }}>{formatDateISOToMMDDYYYY(r.createdAt)}</Typography>
-        </Box>
-      ))}
+      <section className="space-y-4">
+        <h2 className="text-xl font-semibold text-foreground">Reviews</h2>
+        {reviews.length === 0 && <p className="text-muted-foreground">No reviews yet.</p>}
+        {reviews.map((r) => (
+          <Card key={r.id} className="relative border border-border/70 bg-card/80 p-1">
+            <CardContent className="space-y-3 pb-10">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-card-foreground">{r.user.name}</p>
+                  <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+                    <StarRating value={r.rating} readOnly size="sm" />
+                    <span>({r.rating}/5)</span>
+                  </div>
+                </div>
+                {user?.id === r.user.id && (
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => setEditing({ id: r.id, rating: r.rating, comment: r.comment })}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-destructive"
+                      onClick={() => openConfirm(r.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
+              </div>
+              <p className="text-sm text-card-foreground/90 leading-relaxed">{r.comment}</p>
+            </CardContent>
+            <span className="absolute bottom-4 right-6 text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
+              {formatDateISOToMMDDYYYY(r.createdAt)}
+            </span>
+          </Card>
+        ))}
+      </section>
 
       <EditReviewDialog open={Boolean(editing)} onClose={() => setEditing(null)} review={editing} onSaved={() => fetchReviews()} />
       <ConfirmDialog
@@ -130,18 +148,7 @@ export default function ShoeClient({ shoeId }: { shoeId: number }) {
         onClose={() => setConfirmOpen({ open: false })}
       />
 
-      <ReviewForm shoeId={shoeId} onReviewAdded={() => {
-        // refresh reviews after a new review is posted
-        (async () => {
-          try {
-            const res = await fetch(`http://localhost:3001/reviews/shoe/${shoeId}`);
-            const data: Review[] = await res.json();
-            setReviews(data);
-          } catch (err) {
-            console.error(err);
-          }
-        })();
-      }} />
-    </Box>
+      <ReviewForm shoeId={shoeId} onReviewAdded={() => { fetchReviews(); }} />
+    </div>
   );
 }

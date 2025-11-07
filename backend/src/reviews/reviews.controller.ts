@@ -22,9 +22,9 @@ export class ReviewsController {
       // legacy
       pace?: number;
       // new structured fields
-      fit: 'SMALL' | 'TRUE_TO_SIZE' | 'BIG';
-      cushion: 'SOFT' | 'BALANCED' | 'FIRM';
-      stability: 'NEUTRAL' | 'MODERATE_SUPPORT' | 'HIGH_SUPPORT';
+      fit?: 'SMALL' | 'TRUE_TO_SIZE' | 'BIG';
+      cushion?: 'SOFT' | 'BALANCED' | 'FIRM';
+      stability?: 'NEUTRAL' | 'MODERATE_SUPPORT' | 'HIGH_SUPPORT';
       mileage?: number;
       paceMinutes?: number;
       paceSeconds?: number;
