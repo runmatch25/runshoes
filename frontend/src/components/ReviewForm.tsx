@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Box, Button, Rating, TextField, Typography } from "@mui/material";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { StarRating } from "@/components/StarRating";
 
 interface ReviewFormProps {
   shoeId: number;
@@ -42,32 +44,21 @@ export default function ReviewForm({ shoeId, onReviewAdded }: ReviewFormProps) {
   }
 
   return (
-    <Box mt={4}>
-      <Typography variant="h6" gutterBottom>
-        Leave a Review
-      </Typography>
-      <Rating
-        value={rating}
-        onChange={(_, newValue) => setRating(newValue)}
-        precision={1}
-        size="large"
-      />
-      <TextField
-        fullWidth
-        multiline
+    <div className="mt-6 space-y-4">
+      <h3 className="text-lg font-semibold">Leave a Review</h3>
+      <div className="flex items-center gap-3">
+        <StarRating value={rating ?? 0} onChange={(val) => setRating(val)} size="lg" />
+        {rating ? <span className="text-sm text-muted-foreground">{rating}/5</span> : null}
+      </div>
+      <Textarea
         rows={3}
-        label="Comment"
-        margin="normal"
+        placeholder="How does this shoe feel?"
         value={comment}
         onChange={(e) => setComment(e.target.value)}
       />
-      <Button
-        variant="contained"
-        onClick={handleSubmit}
-        disabled={!rating || !comment}
-      >
+      <Button onClick={handleSubmit} disabled={!rating || !comment.trim()}>
         Submit Review
       </Button>
-    </Box>
+    </div>
   );
 }

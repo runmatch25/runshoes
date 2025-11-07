@@ -1,14 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Box, Card, CardContent, Typography, Rating, Button, IconButton } from "@mui/material";
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
-import { useAuth } from '@/context/AuthContext';
+import { useCallback, useEffect, useState } from "react";
 import EditReviewDialog from '@/components/EditReviewDialog';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import { formatDateISOToMMDDYYYY } from "@/lib/formatDate";
 import { useRouter } from "next/navigation";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { StarRating } from "@/components/StarRating";
+import { Pencil, Trash2 } from "lucide-react";
 
 interface Review {
   id: number;
@@ -21,10 +21,40 @@ interface Review {
 export default function ProfilePage() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [userName, setUserName] = useState<string>("");
-  const { user } = useAuth();
   const [editing, setEditing] = useState<{ id: number; rating: number; comment: string } | null>(null);
   const [confirmOpen, setConfirmOpen] = useState<{ open: boolean; id?: number }>({ open: false });
   const router = useRouter();
+
+  const fetchReviews = useCallback(async () => {
+    const token = localStorage.getItem("token");
+    const res = await fetch("http://localhost:3001/reviews/me", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (!res.ok) {
+      console.error("Failed to fetch reviews", res.statusText);
+      setReviews([]);
+      return;
+    }
+
+    const data = await res.json();
+    const normalizedReviews: Review[] = Array.isArray(data)
+      ? data
+      : Array.isArray(data?.reviews)
+        ? data.reviews
+        : [];
+
+    setReviews(normalizedReviews);
+  }, []);
+
+  const fetchUser = useCallback(async () => {
+    const token = localStorage.getItem("token");
+    const res = await fetch("http://localhost:3001/auth/me", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = await res.json();
+    setUserName(data.name);
+  }, []);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -35,26 +65,7 @@ export default function ProfilePage() {
 
     fetchUser();
     fetchReviews();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [router]);
-
-  async function fetchReviews() {
-    const token = localStorage.getItem("token");
-    const res = await fetch("http://localhost:3001/reviews/me", {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const data = await res.json();
-    setReviews(data);
-  }
-
-  async function fetchUser() {
-    const token = localStorage.getItem("token");
-    const res = await fetch("http://localhost:3001/auth/me", {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const data = await res.json();
-    setUserName(data.name);
-  }
+  }, [fetchReviews, fetchUser, router]);
 
   function openConfirm(id: number) {
     setConfirmOpen({ open: true, id });
@@ -74,65 +85,57 @@ export default function ProfilePage() {
   }
 
   return (
-    <Box sx={{ p: 4 }}>
-      <Typography variant="h4" sx={{ fontWeight: 700, mb: 3 }}>
-        Welcome, {userName || "User"}
-      </Typography>
+    <div className="mx-auto flex max-w-6xl flex-col gap-6 px-6 py-10">
+      <div>
+        <h1 className="text-3xl font-bold text-foreground">Welcome, {userName || "Runner"}</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Manage your reviews and revisit the shoes you&apos;ve rated.
+        </p>
+      </div>
 
       {reviews.length === 0 ? (
-        <Typography variant="body1" sx={{ opacity: 0.8 }}>
-          You haven’t left any reviews yet.
-        </Typography>
+        <p className="text-muted-foreground">You haven&apos;t left any reviews yet.</p>
       ) : (
-        <Box sx={{ display: "grid", gap: 3, gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))" }}>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {reviews.map((review) => (
             <Card
               key={review.id}
-              sx={{
-                  position: "relative",
-                  backdropFilter: "blur(12px)",
-                  backgroundColor: "rgba(255,255,255,0.05)",
-                  border: "1px solid rgba(255,255,255,0.1)",
-                  transition: "transform 0.3s, box-shadow 0.3s",
-                  "&:hover": {
-                    transform: "translateY(-5px)",
-                    boxShadow: "0 8px 30px rgba(255,255,255,0.2)",
-                  },
-              }}
+              className="relative border border-border/70 bg-card/90 transition hover:-translate-y-1 hover:shadow-lg"
             >
-                <CardContent sx={{ pb: 6 }}>
-                <Typography variant="h6">
-                  {review.shoe.brand} {review.shoe.model}
-                </Typography>
-                <Rating value={review.rating} readOnly sx={{ mt: 1 }} />
-                <Typography variant="body2" sx={{ mt: 1, opacity: 0.9 }}>
-                  {review.comment}
-                </Typography>
-                <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    onClick={() => router.push(`/shoes/${review.shoe.id}`)}
-                  >
+              <CardHeader>
+                <CardTitle>{review.shoe.brand} {review.shoe.model}</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <StarRating value={review.rating} readOnly size="md" />
+                <p className="text-sm text-card-foreground/90 leading-relaxed">{review.comment}</p>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" onClick={() => router.push(`/shoes/${review.shoe.id}`)}>
                     View Shoe
                   </Button>
-                  <IconButton size="small" onClick={() => setEditing({ id: review.id, rating: review.rating, comment: review.comment })}>
-                    <EditIcon fontSize="small" />
-                  </IconButton>
-                  <IconButton size="small" onClick={() => openConfirm(review.id)}>
-                    <DeleteIcon fontSize="small" />
-                  </IconButton>
-                </Box>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => setEditing({ id: review.id, rating: review.rating, comment: review.comment })}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-destructive hover:text-destructive"
+                    onClick={() => openConfirm(review.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </CardContent>
-              <Typography
-                variant="caption"
-                sx={{ position: "absolute", right: 12, bottom: 10, color: "rgba(255,255,255,0.7)" }}
-              >
+              <span className="absolute bottom-4 right-6 text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
                 {formatDateISOToMMDDYYYY(review.createdAt)}
-              </Typography>
+              </span>
             </Card>
           ))}
-        </Box>
+        </div>
       )}
       <EditReviewDialog open={Boolean(editing)} onClose={() => setEditing(null)} review={editing} onSaved={() => fetchReviews()} />
       <ConfirmDialog
@@ -142,6 +145,6 @@ export default function ProfilePage() {
         onConfirm={handleConfirmDelete}
         onClose={() => setConfirmOpen({ open: false })}
       />
-    </Box>
+    </div>
   );
 }

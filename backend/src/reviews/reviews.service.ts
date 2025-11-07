@@ -16,21 +16,42 @@ export class ReviewsService {
     }
   }
 
-  async createReview(token: string, shoeId: number, rating: number, comment: string, pace?: number, weight?: number) {
+  async createReview(
+    token: string,
+    data: {
+      shoeId: number;
+      rating: number;
+      comment: string;
+      pace?: number;
+      fit?: 'SMALL' | 'TRUE_TO_SIZE' | 'BIG';
+      cushion?: 'SOFT' | 'BALANCED' | 'FIRM';
+      stability?: 'NEUTRAL' | 'MODERATE_SUPPORT' | 'HIGH_SUPPORT';
+      mileage?: number;
+      paceMinutes?: number;
+      paceSeconds?: number;
+      weight?: number;
+    },
+  ) {
     const userId = await this.getUserFromToken(token);
 
     // Ensure the shoe exists
-    const shoe = await this.prisma.shoe.findUnique({ where: { id: shoeId } });
+    const shoe = await this.prisma.shoe.findUnique({ where: { id: data.shoeId } });
     if (!shoe) throw new NotFoundException('Shoe not found');
 
     return this.prisma.review.create({
       data: {
-        rating,
-        comment,
-        shoeId,
+        rating: data.rating,
+        comment: data.comment,
+        shoeId: data.shoeId,
         userId,
-        pace,
-        weight,
+        pace: data.pace,
+        fit: data.fit ? (data.fit as any) : undefined,
+        cushion: data.cushion ? (data.cushion as any) : undefined,
+        stability: data.stability ? (data.stability as any) : undefined,
+        mileage: data.mileage,
+        paceMinutes: data.paceMinutes,
+        paceSeconds: data.paceSeconds,
+        weight: data.weight,
       },
       include: { user: { select: { id: true, name: true } }, shoe: true },
     });
@@ -59,13 +80,28 @@ export class ReviewsService {
     return this.prisma.review.findMany({
       include: {
         user: { select: { id: true, name: true } },
-        shoe: { select: { brand: true, model: true } },
+        shoe: { select: { id: true, brand: true, model: true } },
       },
       orderBy: { createdAt: 'desc' },
     });
   }
 
-  async updateReview(token: string, reviewId: number, updates: { rating?: number; comment?: string; pace?: number; weight?: number }) {
+  async updateReview(
+    token: string,
+    reviewId: number,
+    updates: {
+      rating?: number;
+      comment?: string;
+      pace?: number;
+      fit?: 'SMALL' | 'TRUE_TO_SIZE' | 'BIG';
+      cushion?: 'SOFT' | 'BALANCED' | 'FIRM';
+      stability?: 'NEUTRAL' | 'MODERATE_SUPPORT' | 'HIGH_SUPPORT';
+      mileage?: number;
+      paceMinutes?: number;
+      paceSeconds?: number;
+      weight?: number;
+    },
+  ) {
     const userId = await this.getUserFromToken(token);
 
     const existing = await this.prisma.review.findUnique({ where: { id: reviewId } });

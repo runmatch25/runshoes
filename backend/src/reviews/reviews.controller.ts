@@ -14,10 +14,40 @@ export class ReviewsController {
   @Post()
   async create(
     @Headers('authorization') authHeader: string,
-    @Body() body: { shoeId: number; rating: number; comment: string; pace?: number; weight?: number },
+    @Body()
+    body: {
+      shoeId: number;
+      rating: number;
+      comment: string;
+      // legacy
+      pace?: number;
+      // new structured fields
+      fit?: 'SMALL' | 'TRUE_TO_SIZE' | 'BIG';
+      cushion?: 'SOFT' | 'BALANCED' | 'FIRM';
+      stability?: 'NEUTRAL' | 'MODERATE_SUPPORT' | 'HIGH_SUPPORT';
+      mileage?: number;
+      paceMinutes?: number;
+      paceSeconds?: number;
+      weight?: number;
+    },
   ) {
     const token = authHeader?.replace('Bearer ', '');
-    return this.reviewsService.createReview(token, body.shoeId, body.rating, body.comment, body.pace, body.weight);
+    return this.reviewsService.createReview(
+      token,
+      {
+        shoeId: body.shoeId,
+        rating: body.rating,
+        comment: body.comment,
+        pace: body.pace,
+        fit: body.fit,
+        cushion: body.cushion,
+        stability: body.stability,
+        mileage: body.mileage,
+        paceMinutes: body.paceMinutes,
+        paceSeconds: body.paceSeconds,
+        weight: body.weight,
+      },
+    );
   }
 
   @Get('shoe/:shoeId')
@@ -35,7 +65,19 @@ export class ReviewsController {
   async updateReview(
     @Param('id') id: string,
     @Headers('authorization') authHeader: string,
-    @Body() body: { rating?: number; comment?: string; pace?: number; weight?: number },
+    @Body()
+    body: {
+      rating?: number;
+      comment?: string;
+      pace?: number;
+      fit?: 'SMALL' | 'TRUE_TO_SIZE' | 'BIG';
+      cushion?: 'SOFT' | 'BALANCED' | 'FIRM';
+      stability?: 'NEUTRAL' | 'MODERATE_SUPPORT' | 'HIGH_SUPPORT';
+      mileage?: number;
+      paceMinutes?: number;
+      paceSeconds?: number;
+      weight?: number;
+    },
   ) {
     const token = authHeader?.replace('Bearer ', '');
     return this.reviewsService.updateReview(token, Number(id), body);

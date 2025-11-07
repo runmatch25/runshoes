@@ -1,15 +1,16 @@
 "use client";
 
-import { AppBar, Toolbar, Button, Typography, Box } from "@mui/material";
-import Image from "next/image";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
-import { useTheme } from "@mui/material/styles";
 import React, { useEffect, useRef, useState } from "react";
+import { Bitcount_Grid_Single } from 'next/font/google';
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+
+const bitcount = Bitcount_Grid_Single({ subsets: ['latin'], weight: '400' });
 
 export default function Navbar() {
   const { user, logout } = useAuth();
-  const theme = useTheme();
   const [show, setShow] = useState(true);
   const lastScroll = useRef(0);
 
@@ -30,71 +31,39 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  const linkClass = "text-xs font-semibold uppercase tracking-[0.18em] text-foreground/90 transition hover:text-foreground";
+
   return (
-    <AppBar
-      position="fixed"
-      elevation={0}
-      sx={{
-        background: "transparent",
-        color: "#000",
-        borderBottom: "none",
-        height: 60,
-        boxShadow: "none",
-        zIndex: (theme) => theme.zIndex.drawer + 10,
-        transition: "transform 0.4s cubic-bezier(.4,1.3,.4,1)",
-        transform: show ? "translateY(0)" : "translateY(-110%)",
-      }}
+    <header
+      className={cn(
+        "fixed inset-x-0 top-0 z-50 border-b border-border/60 bg-background/70 backdrop-blur-md transition-transform duration-500",
+        show ? "translate-y-0" : "-translate-y-full"
+      )}
     >
-      <Toolbar sx={{
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        height: 60,
-        minHeight: 60,
-        position: "relative",
-        paddingX: 4,
-      }}>
-        {/* Far left: Logo */}
-        <Box sx={{ position: "absolute", left: 0, top: 0, bottom: 0, display: "flex", alignItems: "center", height: 60 }}>
-          <Link href="/" style={{ display: "inline-flex", alignItems: "center" }}>
-            <Image src="/images/logo.png" alt="RunRate" width={93} height={48} priority />
-          </Link>
-        </Box>
-        {/* Center nav: Shoes, Reviews */}
-        <Box sx={{ position: "absolute", left: '50%', top: 0, bottom: 0, display: "flex", alignItems: "center", gap: 3, height: 60, transform: 'translateX(-50%)' }}>
-          <Link href="/shoes" style={{ color: "#000", textDecoration: "none" }}>
-            <Box sx={{ fontWeight: 600, fontSize: 15, letterSpacing: 1, cursor: "pointer", textTransform: "uppercase", '&:hover': { textDecoration: 'underline' }, color: "#000" }}>
-              Shoes
-            </Box>
-          </Link>
-          <Link href="/reviews" style={{ color: "#000", textDecoration: "none" }}>
-            <Box sx={{ fontWeight: 600, fontSize: 15, letterSpacing: 1, cursor: "pointer", textTransform: "uppercase", '&:hover': { textDecoration: 'underline' }, color: "#000" }}>
-              Reviews
-            </Box>
-          </Link>
-        </Box>
-        {/* Right nav: Profile/Logout or Login */}
-        <Box sx={{ position: "absolute", right: 0, top: 0, bottom: 0, display: "flex", alignItems: "center", gap: 3, height: 60 }}>
+      <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-6">
+        <Link href="/" className="flex items-center">
+          <span className={cn(bitcount.className, "text-2xl text-foreground tracking-widest")}>RUNRATED</span>
+        </Link>
+        <nav className="hidden gap-8 md:flex">
+          <Link href="/shoes" className={linkClass}>Shoes</Link>
+          <Link href="/reviews" className={linkClass}>Reviews</Link>
+          <Link href="/review" className={linkClass}>Review Shoe</Link>
+        </nav>
+        <div className="flex items-center gap-4">
           {user ? (
             <>
-              <Link href="/profile" style={{ color: "#000", textDecoration: "none" }}>
-                <Box sx={{ fontWeight: 600, fontSize: 15, letterSpacing: 1, cursor: "pointer", textTransform: "uppercase", '&:hover': { textDecoration: 'underline' }, color: "#000" }}>
-                  Profile
-                </Box>
-              </Link>
-              <Box onClick={logout} sx={{ fontWeight: 600, fontSize: 15, letterSpacing: 1, cursor: "pointer", textTransform: "uppercase", color: "#000", ml: 2, '&:hover': { textDecoration: 'underline' } }}>
+              <Link href="/profile" className={linkClass}>Profile</Link>
+              <Button variant="ghost" size="sm" onClick={logout} className="uppercase tracking-[0.18em] text-xs">
                 Logout
-              </Box>
+              </Button>
             </>
           ) : (
-            <Link href="/login" style={{ color: "#000", textDecoration: "none" }}>
-              <Box sx={{ fontWeight: 600, fontSize: 15, letterSpacing: 1, cursor: "pointer", textTransform: "uppercase", '&:hover': { textDecoration: 'underline' }, color: "#000" }}>
-                Login
-              </Box>
-            </Link>
+            <Button variant="default" size="sm" className="uppercase tracking-[0.2em] text-xs" asChild>
+              <Link href="/login">Login</Link>
+            </Button>
           )}
-        </Box>
-      </Toolbar>
-    </AppBar>
+        </div>
+      </div>
+    </header>
   );
 }

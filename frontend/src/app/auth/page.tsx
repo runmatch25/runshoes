@@ -1,13 +1,17 @@
 "use client";
 
-import { useState } from "react";
-import { Box, Button, TextField, Typography } from "@mui/material";
+import { ChangeEvent, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent } from "@/components/ui/card";
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
   const [form, setForm] = useState({ name: "", email: "", password: "", weight: "", pace: "" });
 
-  const handleChange = (e: any) => setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) =>
+    setForm({ ...form, [e.target.name]: e.target.value });
 
   async function handleSubmit() {
     const endpoint = isLogin ? "login" : "register";
@@ -32,27 +36,50 @@ export default function AuthPage() {
   }
 
   return (
-    <Box maxWidth={400} mx="auto" mt={8}>
-      <Typography variant="h5" mb={2}>
-        {isLogin ? "Login" : "Register"}
-      </Typography>
+    <div className="mx-auto mt-10 max-w-sm">
+      <Card className="border border-border/70 bg-card/80">
+        <CardContent className="space-y-4 p-6">
+          <div className="space-y-2 text-center">
+            <h1 className="text-xl font-semibold text-foreground">{isLogin ? "Login" : "Register"}</h1>
+            <p className="text-sm text-muted-foreground">Debug form for direct auth endpoints</p>
+          </div>
 
-      {!isLogin && (
-        <>
-          <TextField label="Name" name="name" fullWidth margin="normal" value={form.name} onChange={handleChange} />
-          <TextField label="Weight (kg)" name="weight" fullWidth margin="normal" value={form.weight} onChange={handleChange} />
-          <TextField label="Pace (min/km)" name="pace" fullWidth margin="normal" value={form.pace} onChange={handleChange} />
-        </>
-      )}
-      <TextField label="Email" name="email" fullWidth margin="normal" value={form.email} onChange={handleChange} />
-      <TextField label="Password" name="password" type="password" fullWidth margin="normal" value={form.password} onChange={handleChange} />
+          {!isLogin && (
+            <div className="space-y-3">
+              <div className="space-y-1">
+                <Label htmlFor="name">Name</Label>
+                <Input id="name" name="name" value={form.name} onChange={handleChange} />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="weight">Weight (kg)</Label>
+                <Input id="weight" name="weight" value={form.weight} onChange={handleChange} />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="pace">Pace (min/km)</Label>
+                <Input id="pace" name="pace" value={form.pace} onChange={handleChange} />
+              </div>
+            </div>
+          )}
 
-      <Button variant="contained" fullWidth sx={{ mt: 2 }} onClick={handleSubmit}>
-        {isLogin ? "Login" : "Register"}
-      </Button>
-      <Button fullWidth sx={{ mt: 1 }} onClick={() => setIsLogin(!isLogin)}>
-        {isLogin ? "Need an account? Register" : "Already have an account? Login"}
-      </Button>
-    </Box>
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <Label htmlFor="email">Email</Label>
+              <Input id="email" name="email" value={form.email} onChange={handleChange} />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="password">Password</Label>
+              <Input id="password" name="password" type="password" value={form.password} onChange={handleChange} />
+            </div>
+          </div>
+
+          <Button className="w-full" onClick={handleSubmit}>
+            {isLogin ? "Login" : "Register"}
+          </Button>
+          <Button variant="ghost" className="w-full" onClick={() => setIsLogin(!isLogin)}>
+            {isLogin ? "Need an account? Register" : "Already have an account? Login"}
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
