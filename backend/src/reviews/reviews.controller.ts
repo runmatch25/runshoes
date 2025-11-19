@@ -29,9 +29,11 @@ export class ReviewsController {
       paceMinutes?: number;
       paceSeconds?: number;
       weight?: number;
+      paceRange?: string;
+      weightRange?: string;
     },
   ) {
-    const token = authHeader?.replace('Bearer ', '');
+    const token = authHeader?.replace('Bearer ', '') ?? '';
     return this.reviewsService.createReview(
       token,
       {
@@ -46,18 +48,21 @@ export class ReviewsController {
         paceMinutes: body.paceMinutes,
         paceSeconds: body.paceSeconds,
         weight: body.weight,
+        paceRange: body.paceRange,
+        weightRange: body.weightRange,
       },
     );
   }
 
   @Get('shoe/:shoeId')
-  async getByShoe(@Param('shoeId') shoeId: string) {
-    return this.reviewsService.getReviewsForShoe(Number(shoeId));
+  async getByShoe(@Param('shoeId') shoeId: string, @Headers('authorization') authHeader?: string) {
+    const token = authHeader?.replace('Bearer ', '') ?? '';
+    return this.reviewsService.getReviewsForShoe(Number(shoeId), token);
   }
 
   @Get('me')
   async getMyReviews(@Headers('authorization') authHeader: string) {
-    const token = authHeader?.replace('Bearer ', '');
+    const token = authHeader?.replace('Bearer ', '') ?? '';
     return this.reviewsService.getUserReviews(token);
   }
 
@@ -77,15 +82,27 @@ export class ReviewsController {
       paceMinutes?: number;
       paceSeconds?: number;
       weight?: number;
+      paceRange?: string;
+      weightRange?: string;
     },
   ) {
-    const token = authHeader?.replace('Bearer ', '');
+    const token = authHeader?.replace('Bearer ', '') ?? '';
     return this.reviewsService.updateReview(token, Number(id), body);
   }
 
   @Delete(':id')
   async deleteReview(@Param('id') id: string, @Headers('authorization') authHeader: string) {
-    const token = authHeader?.replace('Bearer ', '');
+    const token = authHeader?.replace('Bearer ', '') ?? '';
     return this.reviewsService.deleteReview(token, Number(id));
+  }
+
+  @Post(':id/vote')
+  async voteOnReview(
+    @Param('id') id: string,
+    @Headers('authorization') authHeader: string,
+    @Body() body: { value: number },
+  ) {
+    const token = authHeader?.replace('Bearer ', '');
+    return this.reviewsService.voteReview(token, Number(id), body.value);
   }
 }

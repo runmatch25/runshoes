@@ -7,6 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { StarRating } from "@/components/StarRating";
+import { useUnitPreferences } from "@/context/UnitPreferencesContext";
+
+const KM_PER_MILE = 1.60934;
 
 export default function NewReviewPage() {
   const [shoeId, setShoeId] = useState("");
@@ -16,9 +19,38 @@ export default function NewReviewPage() {
   const [pace, setPace] = useState("");
   const [weight, setWeight] = useState("");
   const router = useRouter();
+  const { distanceUnit, distanceLabel, weightLabel, toBaseWeight } = useUnitPreferences();
+
+  const parsePaceInput = (raw: string): number | undefined => {
+    const trimmed = raw.trim();
+    if (!trimmed) return undefined;
+    if (trimmed.includes(":")) {
+      const [minPart, secPart = "0"] = trimmed.split(":");
+      const minutes = Number.parseFloat(minPart);
+      const seconds = Number.parseFloat(secPart);
+      if (!Number.isFinite(minutes) || !Number.isFinite(seconds)) return undefined;
+      return minutes + seconds / 60;
+    }
+    const numeric = Number.parseFloat(trimmed);
+    return Number.isFinite(numeric) ? numeric : undefined;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const weightNumber = weight.trim() === "" ? undefined : Number.parseFloat(weight);
+    const payloadWeight =
+      weightNumber !== undefined && Number.isFinite(weightNumber)
+        ? toBaseWeight(weightNumber)
+        : undefined;
+
+    const paceNumber = parsePaceInput(pace);
+    const payloadPace =
+      paceNumber !== undefined
+        ? distanceUnit === "kilometers"
+          ? paceNumber
+          : paceNumber / KM_PER_MILE
+        : undefined;
+
     await fetch("http://localhost:3001/reviews", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -27,8 +59,8 @@ export default function NewReviewPage() {
         userId,
         rating,
         comment,
-        pace,
-        weight,
+        pace: payloadPace,
+        weight: payloadWeight,
       }),
     });
     router.push("/reviews");
@@ -60,12 +92,12 @@ export default function NewReviewPage() {
               onChange={(e) => setComment(e.target.value)}
             />
             <Input
-              placeholder="Pace (min/km)"
+              placeholder={`Pace (min/${distanceLabel})`}
               value={pace}
               onChange={(e) => setPace(e.target.value)}
             />
             <Input
-              placeholder="Weight (kg)"
+              placeholder={`Weight (${weightLabel})`}
               value={weight}
               onChange={(e) => setWeight(e.target.value)}
             />

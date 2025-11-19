@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Query } from '@nestjs/common';
+import { Body, Controller, Get, Headers, Param, Post, Query } from '@nestjs/common';
 import { ReviewsService } from '../reviews/reviews.service';
 import { ShoesService } from './shoes.service';
 
@@ -44,7 +44,8 @@ export class ShoesController {
 
   // 🟧 Get reviews for a specific shoe
   @Get(':shoeId/reviews')
-  async getReviewsForShoe(@Param('shoeId') shoeId: string) {
-    return this.reviewsService.getReviewsForShoe(Number(shoeId));
+  async getReviewsForShoe(@Param('shoeId') shoeId: string, @Headers('authorization') authHeader?: string) {
+    const token = authHeader?.replace('Bearer ', '') ?? '';
+    return this.reviewsService.getReviewsForShoe(Number(shoeId), token);
   }
 }

@@ -17,9 +17,19 @@ interface ConfirmDialogProps {
   description?: string;
   onConfirm: () => void;
   onClose: () => void;
+  confirmLabel?: string;
+  confirmVariant?: React.ComponentProps<typeof Button>["variant"];
 }
 
-export default function ConfirmDialog({ open, title = "Are you sure?", description = "This action cannot be undone.", onConfirm, onClose }: ConfirmDialogProps) {
+export default function ConfirmDialog({
+  open,
+  title = "Are you sure?",
+  description = "This action cannot be undone.",
+  onConfirm,
+  onClose,
+  confirmLabel = "Delete",
+  confirmVariant = "destructive",
+}: ConfirmDialogProps) {
   return (
     <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) onClose(); }}>
       <DialogContent>
@@ -31,8 +41,8 @@ export default function ConfirmDialog({ open, title = "Are you sure?", descripti
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
-          <Button variant="destructive" onClick={onConfirm}>
-            Delete
+          <Button variant={confirmVariant} onClick={onConfirm}>
+            {confirmLabel}
           </Button>
         </DialogFooter>
       </DialogContent>

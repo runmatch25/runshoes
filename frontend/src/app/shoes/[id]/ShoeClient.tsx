@@ -5,11 +5,9 @@ import { formatDateISOToMMDDYYYY } from "@/lib/formatDate";
 import ReviewForm from "@/components/ReviewForm";
 import { useAuth } from "@/context/AuthContext";
 import ConfirmDialog from '@/components/ConfirmDialog';
-import EditReviewDialog from '@/components/EditReviewDialog';
+import EditReviewDialog, { EditableReview } from '@/components/EditReviewDialog';
+import ReviewCard from '@/components/ReviewCard';
 import { StarRating } from "@/components/StarRating";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Pencil, Trash2 } from "lucide-react";
 
 interface Review {
   id: number;
@@ -17,6 +15,18 @@ interface Review {
   comment: string;
   createdAt?: string | null;
   user: { id: number; name: string };
+  helpfulCount: number;
+  notHelpfulCount: number;
+  userVote: number;
+  fit?: "SMALL" | "TRUE_TO_SIZE" | "BIG" | null;
+  cushion?: "SOFT" | "BALANCED" | "FIRM" | null;
+  stability?: "NEUTRAL" | "MODERATE_SUPPORT" | "HIGH_SUPPORT" | null;
+  mileage?: number | null;
+  paceMinutes?: number | null; // legacy
+  paceSeconds?: number | null; // legacy
+  weight?: number | null; // legacy
+  paceRange?: string | null;
+  weightRange?: string | null;
 }
 
 interface Shoe {
@@ -30,8 +40,11 @@ export default function ShoeClient({ shoeId }: { shoeId: number }) {
   const [shoe, setShoe] = useState<Shoe | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const { user } = useAuth();
-  const [editing, setEditing] = useState<{ id: number; rating: number; comment: string } | null>(null);
+  const [editing, setEditing] = useState<EditableReview | null>(null);
   const [confirmOpen, setConfirmOpen] = useState<{ open: boolean; id?: number }>({ open: false });
+  const [voteConfirm, setVoteConfirm] = useState<{ open: boolean; reviewId?: number; value?: 1 | -1 }>({
+    open: false,
+  });
 
   const fetchShoe = useCallback(async () => {
     try {
@@ -45,13 +58,68 @@ export default function ShoeClient({ shoeId }: { shoeId: number }) {
 
   const fetchReviews = useCallback(async () => {
     try {
-      const resReviews = await fetch(`http://localhost:3001/reviews/shoe/${shoeId}`);
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+      const resReviews = await fetch(`http://localhost:3001/reviews/shoe/${shoeId}`, {
+        headers,
+      });
       const reviewData: Review[] = await resReviews.json();
       setReviews(reviewData);
     } catch (err) {
       console.error(err);
     }
   }, [shoeId]);
+
+  const submitVote = useCallback(
+    async (reviewId: number, value: 1 | -1) => {
+      if (!user) {
+        alert('You need to be logged in to vote on reviews.');
+        return;
+      }
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('Unable to find your session. Please log in again.');
+        return;
+      }
+
+      try {
+        const res = await fetch(`http://localhost:3001/reviews/${reviewId}/vote`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ value }),
+        });
+
+        if (!res.ok) {
+          const message = await res.text();
+          throw new Error(message || 'Failed to record vote');
+        }
+
+        const updatedReview: Review = await res.json();
+        setReviews((prev) =>
+          prev.map((review) => (review.id === reviewId ? { ...review, ...updatedReview } : review)),
+        );
+      } catch (err) {
+        console.error(err);
+        alert(err instanceof Error ? err.message : 'Failed to record vote');
+      }
+    },
+    [user],
+  );
+
+  const handleVoteClick = (review: Review, value: 1 | -1) => {
+    if (!user) {
+      alert('You need to be logged in to vote on reviews.');
+      return;
+    }
+    if (review.userVote === value) {
+      setVoteConfirm({ open: true, reviewId: review.id, value });
+      return;
+    }
+    submitVote(review.id, value);
+  };
 
   useEffect(() => {
     fetchShoe();
@@ -98,45 +166,53 @@ export default function ShoeClient({ shoeId }: { shoeId: number }) {
       <section className="space-y-4">
         <h2 className="text-xl font-semibold text-foreground">Reviews</h2>
         {reviews.length === 0 && <p className="text-muted-foreground">No reviews yet.</p>}
-        {reviews.map((r) => (
-          <Card key={r.id} className="relative border border-border/70 bg-card/80 p-1">
-            <CardContent className="space-y-3 pb-10">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-sm font-semibold text-card-foreground">{r.user.name}</p>
-                  <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
-                    <StarRating value={r.rating} readOnly size="sm" />
-                    <span>({r.rating}/5)</span>
-                  </div>
-                </div>
-                {user?.id === r.user.id && (
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={() => setEditing({ id: r.id, rating: r.rating, comment: r.comment })}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-destructive"
-                      onClick={() => openConfirm(r.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                )}
-              </div>
-              <p className="text-sm text-card-foreground/90 leading-relaxed">{r.comment}</p>
-            </CardContent>
-            <span className="absolute bottom-4 right-6 text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
-              {formatDateISOToMMDDYYYY(r.createdAt)}
-            </span>
-          </Card>
-        ))}
+        <div className="flex flex-col gap-8">
+          {reviews.map((r, index) => (
+            <ReviewCard
+              key={r.id}
+              id={r.id}
+              rating={r.rating}
+              comment={r.comment}
+              createdAt={r.createdAt}
+              userName={r.user.name}
+              formattedDate={formatDateISOToMMDDYYYY(r.createdAt)}
+              canEdit={user?.id !== undefined && r.user.id === user.id}
+              onEdit={() =>
+                setEditing({
+                  id: r.id,
+                  rating: r.rating,
+                  comment: r.comment ?? "",
+                  fit: r.fit ?? null,
+                  cushion: r.cushion ?? null,
+                  stability: r.stability ?? null,
+                  mileage: r.mileage ?? null,
+                  paceMinutes: r.paceMinutes ?? null,
+                  paceSeconds: r.paceSeconds ?? null,
+                  weight: r.weight ?? null,
+                  paceRange: r.paceRange ?? null,
+                  weightRange: r.weightRange ?? null,
+                })
+              }
+              onDelete={() => openConfirm(r.id)}
+              showLink={false}
+              helpfulCount={r.helpfulCount}
+              notHelpfulCount={r.notHelpfulCount}
+              userVote={r.userVote}
+              votingDisabled={!user || r.user.id === user?.id}
+              onVote={(value) => handleVoteClick(r, value)}
+              position={index}
+              fit={r.fit ?? undefined}
+              cushion={r.cushion ?? undefined}
+              stability={r.stability ?? undefined}
+              mileage={r.mileage ?? undefined}
+              paceMinutes={r.paceMinutes ?? undefined}
+              paceSeconds={r.paceSeconds ?? undefined}
+              weight={r.weight ?? undefined}
+              paceRange={r.paceRange ?? undefined}
+              weightRange={r.weightRange ?? undefined}
+            />
+          ))}
+        </div>
       </section>
 
       <EditReviewDialog open={Boolean(editing)} onClose={() => setEditing(null)} review={editing} onSaved={() => fetchReviews()} />
@@ -146,6 +222,20 @@ export default function ShoeClient({ shoeId }: { shoeId: number }) {
         description="Are you sure you want to delete this review? This action cannot be undone."
         onConfirm={handleConfirmDelete}
         onClose={() => setConfirmOpen({ open: false })}
+      />
+      <ConfirmDialog
+        open={voteConfirm.open}
+        title="Remove vote"
+        description="Are you sure you want to remove your vote from this review?"
+        onConfirm={() => {
+          if (voteConfirm.reviewId && voteConfirm.value) {
+            submitVote(voteConfirm.reviewId, voteConfirm.value);
+          }
+          setVoteConfirm({ open: false });
+        }}
+        onClose={() => setVoteConfirm({ open: false })}
+        confirmLabel="Remove vote"
+        confirmVariant="default"
       />
 
       <ReviewForm shoeId={shoeId} onReviewAdded={() => { fetchReviews(); }} />
