@@ -10,7 +10,7 @@ export class AuthService {
   async register(email: string, password: string, name: string, weight?: number, pace?: number) {
     const hashed = await bcrypt.hash(password, 10);
 
-    return this.prisma.user.create({
+    const user = await this.prisma.user.create({
       data: {
         email,
         password: hashed,
@@ -18,8 +18,13 @@ export class AuthService {
         weight,
         pace,
       },
-      select: { id: true, name: true, email: true, createdAt: true },
     });
+
+    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET || 'secret', { expiresIn: '7d' });
+    return {
+      token,
+      user: { id: user.id, name: user.name, email: user.email, weight: user.weight, pace: user.pace },
+    };
   }
 
   async login(email: string, password: string) {

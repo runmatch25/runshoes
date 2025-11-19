@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="108" viewBox="0 0 240 108">
+  <defs>
+    <linearGradient id="forest-upper" x1="0%" y1="0%" x2="100%" y2="70%">
+      <stop offset="0%" stop-color="#f2f8f4"/>
+      <stop offset="100%" stop-color="#d8eee0"/>
+    </linearGradient>
+    <linearGradient id="forest-midsole" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#3d9b6d"/>
+      <stop offset="100%" stop-color="#1f6c49"/>
+    </linearGradient>
+    <radialGradient id="forest-glow" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.6)"/>
+      <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+    </radialGradient>
+  </defs>
+  <rect width="240" height="108" rx="18" fill="#edf6f0"/>
+  <rect x="12" y="12" width="216" height="84" rx="36" fill="url(#forest-upper)"/>
+  <path d="M18 66c46-34 152-34 198 0l6 12c-62 24-148 24-210 0z" fill="url(#forest-midsole)"/>
+  <path d="M58 56c12-18 40-24 72-24s60 6 72 24-12 18-34 18-36-12-60-12-36 12-50 0z" fill="#132016" opacity="0.08"/>
+  <ellipse cx="120" cy="50" rx="78" ry="30" fill="url(#forest-glow)" opacity="0.8"/>
+  <path d="M148 54c-6 0-8-4-14-4s-8 4-14 4c6 2 10 4 14 4s8-2 14-4z" fill="#1c1c1c" opacity="0.18"/>
+</svg>
+

@@ -9,6 +9,7 @@ type Shoe = {
   brand: string;
   model: string;
   type: string;
+  imageUrl?: string | null;
   reviews?: { rating: number; comment?: string; createdAt?: string }[];
   latestReviewISO: string;
 };
@@ -44,6 +45,7 @@ export default function RecentReviewsCarousel({ shoes }: RecentReviewsCarouselPr
               brand={shoe.brand}
               model={shoe.model}
               type={shoe.type}
+              imageUrl={shoe.imageUrl}
               reviews={shoe.reviews}
               latestReviewDate={formatDateISOToMMDDYYYY(shoe.latestReviewISO)}
               showDate

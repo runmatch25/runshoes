@@ -34,6 +34,7 @@ model User {
   weight    Int?
   pace      Float?
   reviews   Review[]
+  reviewVotes ReviewVote[]
   createdAt DateTime  @default(now())
 }
 
@@ -61,6 +62,7 @@ model Review {
   shoeId     Int
   user       User      @relation(fields: [userId], references: [id])
   userId     Int
+  votes      ReviewVote[]
   // legacy aggregate pace in min/km or min/mi
   pace       Float?
   // new structured fields
@@ -68,8 +70,24 @@ model Review {
   cushion    Cushion?
   stability  Stability?
   mileage    Int?        // total miles/kilometers logged on the shoe
-  paceMinutes Int?
-  paceSeconds Int?
-  weight     Int?
+  paceMinutes Int?        // legacy - single pace value
+  paceSeconds Int?        // legacy - single pace value
+  weight     Int?         // legacy - single weight value
+  paceRange  String?      // pace range identifier (e.g., "pace-mile-9-31-to-10-59")
+  weightRange String?     // weight range identifier (e.g., "weight-lbs-150-170")
   createdAt  DateTime  @default(now())
+}
+
+model ReviewVote {
+  id        Int      @id @default(autoincrement())
+  review    Review   @relation(fields: [reviewId], references: [id])
+  reviewId  Int
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int
+  value     Int
+  createdAt DateTime @default(now())
+
+  @@unique([reviewId, userId])
+  @@index([reviewId])
+  @@index([userId])
 }

@@ -3,12 +3,22 @@
 import React from "react";
 import Navbar from "@/components/Navbar";
 import { AuthProvider } from "@/context/AuthContext";
-import { Inter, Playfair_Display, JetBrains_Mono } from "next/font/google";
+import { UnitPreferencesProvider } from "@/context/UnitPreferencesContext";
+import { Space_Grotesk, Bebas_Neue } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"], display: "swap", variable: "--font-sans" });
-const playfairDisplay = Playfair_Display({ subsets: ["latin"], display: "swap", variable: "--font-serif" });
-const jetbrainsMono = JetBrains_Mono({ subsets: ["latin"], display: "swap", variable: "--font-mono" });
+const spaceGrotesk = Space_Grotesk({ 
+  subsets: ["latin"], 
+  display: "swap", 
+  variable: "--font-sans",
+  weight: ["400", "500", "600", "700"]
+});
+const bebasNeue = Bebas_Neue({ 
+  subsets: ["latin"], 
+  display: "swap", 
+  variable: "--font-bebas",
+  weight: "400"
+});
 
 export default function RootLayout({
   children,
@@ -16,13 +26,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${inter.variable} ${playfairDisplay.variable} ${jetbrainsMono.variable}`}>
+    <html lang="en" className={`${spaceGrotesk.variable} ${bebasNeue.variable}`}>
       <body>
         <AuthProvider>
-          <div className="min-h-screen bg-background text-foreground pb-8 pt-20 md:pt-24">
-            <Navbar />
-            {children}
-          </div>
+          <UnitPreferencesProvider>
+            <div className="min-h-screen bg-background text-foreground">
+              <Navbar />
+              {children}
+            </div>
+          </UnitPreferencesProvider>
         </AuthProvider>
       </body>
     </html>
