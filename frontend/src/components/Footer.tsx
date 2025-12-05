@@ -32,17 +32,14 @@ export default function Footer() {
             </div>
           </div>
           <div>
-            <h3 className="tracking-wider mb-6">SOCIAL</h3>
+            <h3 className="tracking-wider mb-6">CONNECT</h3>
             <div className="space-y-3">
-              <a href="#" className="block text-neutral-400 hover:text-white transition-colors tracking-wide">
-                TWITTER
-              </a>
               <a href="#" className="block text-neutral-400 hover:text-white transition-colors tracking-wide">
                 INSTAGRAM
               </a>
-              <a href="#" className="block text-neutral-400 hover:text-white transition-colors tracking-wide">
-                GITHUB
-              </a>
+              <Link href="/contact" className="block text-neutral-400 hover:text-white transition-colors tracking-wide">
+                CONTACT US
+              </Link>
             </div>
           </div>
           <div>

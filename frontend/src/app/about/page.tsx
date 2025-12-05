@@ -2,7 +2,6 @@ import Link from "next/link";
 import { Users, Target, Heart, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import Footer from "@/components/Footer";
 
 export default function AboutPage() {
   return (
@@ -175,7 +174,6 @@ export default function AboutPage() {
         </section>
       </div>
 
-      <Footer />
     </div>
   );
 }

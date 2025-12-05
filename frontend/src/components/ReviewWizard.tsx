@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { Check, ArrowRight, ArrowLeft, Star, Footprints, Users, Sparkles, Calendar, MapPin, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -12,6 +13,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { StarRating } from "@/components/StarRating";
 import { ShoeCombobox } from "@/components/ShoeCombobox";
 import { cn } from "@/lib/utils";
@@ -37,81 +40,131 @@ const stabilityOptions = [
   { value: "HIGH_SUPPORT", label: "High support" },
 ] as const;
 
+const categoryOptions = [
+  { value: "Daily trainer", label: "Daily trainer" },
+  { value: "Tempo", label: "Tempo" },
+  { value: "Racing", label: "Racing" },
+  { value: "Long run", label: "Long run" },
+  { value: "Trail", label: "Trail" },
+] as const;
+
+// Category color mapping
+const getCategoryColor = (category: string): { bg: string; text: string } => {
+  switch (category) {
+    case "Daily trainer":
+      return { bg: "#007bff", text: "#ffffff" };
+    case "Tempo":
+      return { bg: "#FF8A3D", text: "#ffffff" };
+    case "Racing":
+      return { bg: "#E53935", text: "#ffffff" };
+    case "Long run":
+      return { bg: "#4CAF50", text: "#ffffff" };
+    case "Trail":
+      return { bg: "#6D4C41", text: "#ffffff" };
+    default:
+      return { bg: "#6b7280", text: "#ffffff" };
+  }
+};
+
 const paceRangeOptionsImperial = [
   {
-    value: "pace-mile-slower-than-11",
-    label: ">11:00/mile",
-    minutes: 11,
-    seconds: 0,
-  },
-  {
-    value: "pace-mile-9-31-to-10-59",
-    label: "9:31 – 10:59/mile",
-    minutes: 10,
-    seconds: 15,
-  },
-  {
-    value: "pace-mile-8-01-to-9-30",
-    label: "8:01 – 9:30/mile",
-    minutes: 8,
-    seconds: 45,
-  },
-  {
-    value: "pace-mile-6-31-to-8-00",
-    label: "6:31 – 8:00/mile",
-    minutes: 7,
-    seconds: 15,
-  },
-  {
-    value: "pace-mile-5-51-to-6-30",
-    label: "5:51 – 6:30/mile",
-    minutes: 6,
-    seconds: 10,
-  },
-  {
-    value: "pace-mile-faster-than-5-50",
-    label: "<5:50/mile",
+    value: "pace-mile-faster-than-6-00",
+    label: "<6:00/mile",
     minutes: 5,
+    seconds: 59,
+  },
+  {
+    value: "pace-mile-6-00-to-6-59",
+    label: "6:00 – 6:59/mile",
+    minutes: 6,
     seconds: 30,
+  },
+  {
+    value: "pace-mile-7-00-to-7-59",
+    label: "7:00 – 7:59/mile",
+    minutes: 7,
+    seconds: 30,
+  },
+  {
+    value: "pace-mile-8-00-to-8-59",
+    label: "8:00 – 8:59/mile",
+    minutes: 8,
+    seconds: 30,
+  },
+  {
+    value: "pace-mile-9-00-to-9-59",
+    label: "9:00 – 9:59/mile",
+    minutes: 9,
+    seconds: 30,
+  },
+  {
+    value: "pace-mile-10-00-to-10-59",
+    label: "10:00 – 10:59/mile",
+    minutes: 10,
+    seconds: 30,
+  },
+  {
+    value: "pace-mile-11-00-to-11-59",
+    label: "11:00 – 11:59/mile",
+    minutes: 11,
+    seconds: 30,
+  },
+  {
+    value: "pace-mile-12-00-or-slower",
+    label: "≥12:00/mile",
+    minutes: 12,
+    seconds: 0,
   },
 ] as const;
 
 const paceRangeOptionsMetric = [
   {
-    value: "pace-km-slower-than-6-50",
-    label: ">6:50/km",
-    minutes: 6,
-    seconds: 50,
+    value: "pace-km-faster-than-3-45",
+    label: "<3:45/km",
+    minutes: 3,
+    seconds: 44,
   },
   {
-    value: "pace-km-5-35-to-6-49",
-    label: "5:35 – 6:49/km",
-    minutes: 6,
-    seconds: 12,
-  },
-  {
-    value: "pace-km-4-40-to-5-34",
-    label: "4:40 – 5:34/km",
-    minutes: 5,
-    seconds: 7,
-  },
-  {
-    value: "pace-km-3-45-to-4-39",
-    label: "3:45 – 4:39/km",
+    value: "pace-km-3-45-to-4-19",
+    label: "3:45 – 4:19/km",
     minutes: 4,
-    seconds: 12,
+    seconds: 2,
   },
   {
-    value: "pace-km-3-15-to-3-44",
-    label: "3:15 – 3:44/km",
-    minutes: 3,
-    seconds: 30,
+    value: "pace-km-4-20-to-4-59",
+    label: "4:20 – 4:59/km",
+    minutes: 4,
+    seconds: 40,
   },
   {
-    value: "pace-km-faster-than-3-15",
-    label: "<3:15/km",
-    minutes: 3,
+    value: "pace-km-5-00-to-5-39",
+    label: "5:00 – 5:39/km",
+    minutes: 5,
+    seconds: 20,
+  },
+  {
+    value: "pace-km-5-40-to-6-19",
+    label: "5:40 – 6:19/km",
+    minutes: 6,
     seconds: 0,
+  },
+  {
+    value: "pace-km-6-20-to-6-59",
+    label: "6:20 – 6:59/km",
+    minutes: 6,
+    seconds: 40,
+  },
+  {
+    value: "pace-km-7-00-to-7-29",
+    label: "7:00 – 7:29/km",
+    minutes: 7,
+    seconds: 15,
+  },
+  {
+    value: "pace-km-7-30-or-slower",
+    label: "≥7:30/km",
+    minutes: 7,
+    seconds: 30,
   },
 ] as const;
 
@@ -214,6 +267,8 @@ interface ReviewSummaryProps {
   comment: string;
   weightRangeLabel: string;
   weightTouched: boolean;
+  categories: string[];
+  categoriesTouched: boolean;
 }
 
 function ReviewSummary({
@@ -232,6 +287,8 @@ function ReviewSummary({
   comment,
   weightRangeLabel,
   weightTouched,
+  categories,
+  categoriesTouched,
 }: ReviewSummaryProps) {
   const { distanceLabel } = useUnitPreferences();
   const hasShoe = Boolean(shoe);
@@ -243,6 +300,7 @@ function ReviewSummary({
   const hasRating = ratingTouched;
   const hasComment = comment.trim() !== "";
   const hasWeight = weightTouched && weightRangeLabel.trim() !== "";
+  const hasCategories = categoriesTouched && categories.length > 0;
 
   if (
     !hasShoe &&
@@ -253,7 +311,8 @@ function ReviewSummary({
     !hasPace &&
     !hasRating &&
     !hasComment &&
-    !hasWeight
+    !hasWeight &&
+    !hasCategories
   ) {
     return null;
   }
@@ -272,6 +331,7 @@ function ReviewSummary({
         {hasPace && <SummaryRow label="Pace range" value={paceRangeLabel} />}
         {hasRating && <SummaryRow label="Rating" value={`${rating}/5`} />}
         {hasWeight && <SummaryRow label="Weight range" value={weightRangeLabel} />}
+        {hasCategories && <SummaryRow label="Categories" value={categories.join(", ")} />}
       </div>
       {hasComment && (
         <div className="mt-3">
@@ -329,6 +389,7 @@ export default function ReviewWizard({
   const [stabilityTouched, setStabilityTouched] = useState(false);
 
   const [mileage, setMileage] = useState<string>("");
+  const [retired, setRetired] = useState<boolean>(false);
   const [paceMinutes, setPaceMinutes] = useState<string>("");
   const [paceSeconds, setPaceSeconds] = useState<string>("");
   const [paceRange, setPaceRange] = useState<string>("");
@@ -342,6 +403,8 @@ export default function ReviewWizard({
   const [weightRangeLabel, setWeightRangeLabel] = useState<string>("");
   const [weightTouched, setWeightTouched] = useState(false);
   const [weight, setWeight] = useState<number | null>(null);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [categoriesTouched, setCategoriesTouched] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -356,6 +419,55 @@ export default function ReviewWizard({
       setShoes(options);
     })();
   }, []);
+
+  useEffect(() => {
+    // Autofill paceRange and weightRange from user profile when reaching step 2
+    // Only autofill if fields are empty (not manually set)
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    if (!token || activeStep !== 2) return;
+
+    (async () => {
+      try {
+        const res = await fetch("http://localhost:3001/auth/me", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const user = await res.json();
+          if (user?.paceRange && paceRange === "") {
+            // Only autofill if the user's paceRange matches the current unit
+            const isMetricPace = user.paceRange.startsWith("pace-km-");
+            const isMetricUnit = distanceUnit === "kilometers";
+            if (isMetricPace === isMetricUnit) {
+              const options = isMetricUnit ? paceRangeOptionsMetric : paceRangeOptionsImperial;
+              const selected = options.find((opt) => opt.value === user.paceRange);
+              if (selected) {
+                setPaceRange(user.paceRange);
+                setPaceRangeLabel(selected.label);
+                setPaceMinutes(selected.minutes.toString());
+                setPaceSeconds(selected.seconds.toString());
+              }
+            }
+          }
+          if (user?.weightRange && weightRange === "") {
+            // Only autofill if the user's weightRange matches the current unit
+            const isMetricWeight = user.weightRange.startsWith("weight-kg-");
+            const isMetricUnit = weightUnit === "kg";
+            if (isMetricWeight === isMetricUnit) {
+              const options = isMetricUnit ? weightRangeOptionsMetric : weightRangeOptionsImperial;
+              const selected = options.find((opt) => opt.value === user.weightRange);
+              if (selected) {
+                setWeightRange(user.weightRange);
+                setWeightRangeLabel(selected.label);
+                setWeight(toBaseWeight(selected.average));
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch user profile for autofill:", error);
+      }
+    })();
+  }, [activeStep, distanceUnit, weightUnit]); // Re-run when step changes to 2 or units change
 
   useEffect(() => {
     if (initialShoeId == null || shoes.length === 0) return;
@@ -382,8 +494,8 @@ export default function ReviewWizard({
 
   const canContinue = useMemo(() => {
     if (activeStep === 0) return Boolean(selectedShoe);
-    if (activeStep === 1) return Boolean(fit && cushion && stability && mileage);
-    if (activeStep === 2) return Boolean(paceRange && weightRange);
+    if (activeStep === 1) return Boolean(fit && cushion && stability);
+    if (activeStep === 2) return Boolean(paceRange && weightRange && mileage);
     if (activeStep === 3) return Boolean(rating && comment.trim());
     return true;
   }, [
@@ -420,6 +532,7 @@ export default function ReviewWizard({
     setCushionTouched(false);
     setStabilityTouched(false);
     setMileage("");
+    setRetired(false);
     setPaceMinutes("");
     setPaceSeconds("");
     setPaceRange("");
@@ -432,6 +545,8 @@ export default function ReviewWizard({
     setWeightRangeLabel("");
     setWeightTouched(false);
     setWeight(null);
+    setCategories([]);
+    setCategoriesTouched(false);
     if (initialShoeId == null) {
       setSelectedShoe(null);
     }
@@ -485,8 +600,10 @@ export default function ReviewWizard({
       cushion,
       stability,
       mileage: mileageBase,
+      retired,
       paceRange: paceRange || undefined,
       weightRange: weightRange || undefined,
+      categories: categories.length > 0 ? categories : undefined,
     };
 
     const res = await fetch("http://localhost:3001/reviews", {
@@ -510,291 +627,783 @@ export default function ReviewWizard({
 
   const isPageLayout = layout === "page";
 
+  const isStepComplete = (stepIndex: number) => {
+    if (stepIndex === 0) return Boolean(selectedShoe);
+    if (stepIndex === 1) return Boolean(fit && cushion && stability);
+    if (stepIndex === 2) return Boolean(paceRange && weightRange && mileage);
+    if (stepIndex === 3) return Boolean(rating && comment.trim());
+    return false;
+  };
+
+  const stepDescriptions = [
+    "Select the shoe you want to review",
+    "How does the shoe perform?",
+    "Your running profile",
+    "Share your experience",
+  ];
+
+  const stepIcons = [
+    Footprints, // Step 1: Choose shoe
+    Users, // Step 2: Fit, cushion, stability
+    Sparkles, // Step 3: Mileage & profile
+    Star, // Step 4: Rating & review
+  ];
+
+  const stepTitles = [
+    "Choose shoe",
+    "Fit, cushion, stability",
+    "Mileage & profile",
+    "Rating & review",
+  ];
+
   return (
     <div
       className={cn(
-        "flex flex-col gap-8",
-        isPageLayout ? "mx-auto max-w-4xl px-6 py-10" : "px-1 py-1"
+        "flex flex-col",
+        isPageLayout ? "mx-auto max-w-[1400px] px-6 lg:px-12 py-6 lg:py-8" : "px-4 py-4"
       )}
     >
       {isPageLayout && (
-        <div className="space-y-3">
-          <h1 className="text-3xl font-bold text-foreground">Review your shoe</h1>
-          <p className="text-sm text-muted-foreground">
-            Share detailed feedback to help runners pick the right pair.
-          </p>
-        </div>
+        <>
+          {/* Page Header */}
+          <section className="py-6 lg:py-8 border-b-2 border-black mb-4">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <span className="tracking-widest text-[#007bff] block mb-2">CONTRIBUTE</span>
+                <h1 
+                  className="text-5xl lg:text-7xl leading-[0.9]" 
+                  style={{ fontFamily: "'Bebas Neue', sans-serif", letterSpacing: '0.02em' }}
+                >
+                  REVIEW YOUR<br />
+                  <span className="text-[#007bff]">SHOE</span>
+                </h1>
+              </div>
+            </div>
+            <p className="text-neutral-600 max-w-2xl leading-relaxed">
+              Share detailed feedback to help runners pick the right pair
+            </p>
+          </section>
+        </>
       )}
 
-      <ol className="flex flex-nowrap items-center gap-3 overflow-x-auto whitespace-nowrap text-xs font-semibold uppercase tracking-[0.12em]">
-        {steps.map((label, idx) => {
-          const status = idx === activeStep ? "active" : idx < activeStep ? "complete" : "upcoming";
-          return (
-            <li key={label} className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setActiveStep(idx)}
-                className={cn(
-                  "flex h-8 w-8 items-center justify-center rounded-full border text-sm transition",
-                  status === "active" && "border-primary bg-primary text-primary-foreground",
-                  status === "complete" && "border-primary bg-primary/10 text-primary",
-                  status === "upcoming" && "border-border text-muted-foreground"
-                )}
-              >
-                {idx + 1}
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveStep(idx)}
-                className={cn(
-                  "text-xs tracking-[0.08em] transition",
-                  status === "active" ? "text-foreground" : "text-muted-foreground"
-                )}
-              >
-                {label}
-              </button>
-              {idx < steps.length - 1 && <span className="text-muted-foreground opacity-40">/</span>}
-            </li>
-          );
-        })}
-      </ol>
+      {/* Mobile: Horizontal Progress Indicator */}
+      <div className="lg:hidden mb-6">
+        <div className="relative">
+          {/* Connecting Lines */}
+          <div className="absolute left-[12.5%] right-[12.5%] top-5 -z-10 h-0.5 bg-gray-200" />
+          <div 
+            className="absolute left-[12.5%] top-5 -z-10 h-0.5 bg-[#007bff] transition-all duration-500"
+            style={{ width: `${(activeStep / (steps.length - 1)) * 75}%` }}
+          />
 
-      <Card className="border border-border/70 bg-card/80 backdrop-blur">
-        <CardContent className={cn("space-y-6", isPageLayout ? "p-6" : "p-4")}>
-          {activeStep === 0 && (
-            <div className="space-y-3">
-              <label className="text-sm font-medium text-muted-foreground">Which shoe?</label>
-              <ShoeCombobox
-                options={shoes.map(({ id, label }) => ({ id, label }))}
-                value={selectedShoe?.id ?? null}
-                onSelect={(option) => {
-                  if (!option) {
-                    setSelectedShoe(null);
-                    return;
-                  }
-                  const match = shoes.find((shoe) => shoe.id === option.id) ?? null;
-                  setSelectedShoe(match);
-                }}
+          <div className="grid grid-cols-4">
+            {steps.map((_, index) => {
+              const Icon = stepIcons[index];
+              const isActive = index === activeStep;
+              const isComplete = index < activeStep && isStepComplete(index);
+              return (
+                <div key={index} className="flex flex-col items-center text-center">
+                  <div className="relative z-10">
+                    <div
+                      className={cn(
+                        "mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full border-2 transition-all duration-300",
+                        isActive
+                          ? "border-[#007bff] bg-[#007bff] text-white shadow-lg"
+                          : isComplete
+                          ? "border-[#007bff] bg-[#007bff] text-white"
+                          : "border-gray-300 bg-white text-gray-400"
+                      )}
+                    >
+                      {isComplete ? (
+                        <Check className="h-5 w-5" />
+                      ) : (
+                        <Icon className={cn(
+                          "h-5 w-5",
+                          isActive ? "text-white" : "text-gray-400"
+                        )} />
+                      )}
+                    </div>
+                    <p className={cn(
+                      "text-xs font-medium transition-colors",
+                      isActive ? "text-[#007bff]" : isComplete ? "text-gray-900" : "text-gray-400"
+                    )}>
+                      {stepTitles[index]}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Two-column layout: Steps on left, Content on right */}
+      <div className={cn(
+        "grid gap-6",
+        isPageLayout ? "lg:grid-cols-[300px_1fr]" : "lg:grid-cols-[250px_1fr]"
+      )}>
+        {/* Left: Vertical Progress Indicator */}
+        <div className="hidden lg:block">
+          <div className="sticky top-6">
+            <div className="relative">
+              {/* Vertical connecting line */}
+              <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-gray-200" />
+              <div 
+                className="absolute left-6 top-0 w-0.5 bg-[#007bff] transition-all duration-500"
+                style={{ height: `${(activeStep / (steps.length - 1)) * 100}%` }}
               />
+
+              {/* Steps */}
+              <div className="space-y-8">
+                {steps.map((_, index) => {
+                  const Icon = stepIcons[index];
+                  const isActive = index === activeStep;
+                  const isComplete = index < activeStep && isStepComplete(index);
+                  const isPending = index > activeStep;
+
+                  return (
+                    <div key={index} className="relative flex items-start gap-4">
+                      {/* Step circle */}
+                      <div className="relative z-10 flex-shrink-0">
+                        <div
+                          className={cn(
+                            "flex h-12 w-12 items-center justify-center rounded-full border-2 transition-all duration-300",
+                            isActive
+                              ? "border-[#007bff] bg-[#007bff] text-white shadow-lg"
+                              : isComplete
+                              ? "border-[#007bff] bg-[#007bff] text-white"
+                              : "border-gray-300 bg-white text-gray-400"
+                          )}
+                        >
+                          {isComplete ? (
+                            <Check className="h-6 w-6" />
+                          ) : (
+                            <Icon className={cn(
+                              "h-6 w-6",
+                              isActive ? "text-white" : "text-gray-400"
+                            )} />
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Step info */}
+                      <div className="flex-1 pt-1">
+                        <div className={cn(
+                          "text-sm font-medium mb-1",
+                          isActive ? "text-[#007bff]" : isComplete ? "text-gray-900" : "text-gray-400"
+                        )}>
+                          Step {index + 1}
+                        </div>
+                        <div className={cn(
+                          "text-base font-semibold mb-1",
+                          isActive ? "text-gray-900" : isComplete ? "text-gray-700" : "text-gray-400"
+                        )}>
+                          {stepTitles[index]}
+                        </div>
+                        <div className={cn(
+                          "text-xs",
+                          isActive ? "text-gray-600" : "text-gray-400"
+                        )}>
+                          {stepDescriptions[index]}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Right: Step Content */}
+        <Card className={cn(
+          "border-2 border-black shadow-black-crisp bg-white min-h-[600px]"
+        )}>
+          <CardContent className={cn("space-y-6", isPageLayout ? "p-6 lg:p-8" : "p-6 lg:p-8")}>
+          {activeStep === 0 && (
+            <div className="space-y-6">
+              {/* Step Header */}
+              <div className="mb-6">
+                <div className="text-sm text-[#007bff] mb-2 font-medium">Step 1</div>
+                <h2 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">
+                  Choose shoe
+                </h2>
+                <p className="text-gray-600">Which shoe are you reviewing?</p>
+              </div>
+              <div className="space-y-6">
+                <div>
+                  <label className="block mb-3 tracking-wider text-base">
+                    WHICH SHOE? *
+                  </label>
+                  <ShoeCombobox
+                    options={shoes.map(({ id, label }) => ({ id, label }))}
+                    value={selectedShoe?.id ?? null}
+                    onSelect={(option) => {
+                      if (!option) {
+                        setSelectedShoe(null);
+                        return;
+                      }
+                      const match = shoes.find((shoe) => shoe.id === option.id) ?? null;
+                      setSelectedShoe(match);
+                    }}
+                    variant="bold"
+                  />
+                </div>
+                <div>
+                  <label className="block mb-3 tracking-wider text-base">
+                    CATEGORIES
+                  </label>
+                  <p className="mb-4 text-sm text-neutral-600">
+                    Select all categories that apply to this shoe
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {categoryOptions.map((option) => {
+                      const isSelected = categories.includes(option.value);
+                      const colors = isSelected ? getCategoryColor(option.value) : null;
+                      return (
+                        <button
+                          key={option.value}
+                          type="button"
+                          onClick={() => {
+                            setCategoriesTouched(true);
+                            if (isSelected) {
+                              setCategories(categories.filter((c) => c !== option.value));
+                            } else {
+                              setCategories([...categories, option.value]);
+                            }
+                          }}
+                          className={cn(
+                            "px-4 py-2 rounded-full text-sm font-medium transition-all",
+                            isSelected
+                              ? "text-white border-2 shadow-sm hover:shadow-md"
+                              : "bg-white text-neutral-700 border-2 border-black hover:bg-neutral-50 shadow-sm hover:shadow-md"
+                          )}
+                          style={
+                            isSelected && colors
+                              ? {
+                                  backgroundColor: colors.bg,
+                                  borderColor: colors.bg,
+                                  color: colors.text,
+                                }
+                              : undefined
+                          }
+                        >
+                          {option.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+              {/* Current Selections - Show in both page and modal layouts */}
+              {(selectedShoe || categories.length > 0) && (
+                <div className="border-l-4 border-[#007bff] pl-6 py-4 bg-[#e6f2ff]/30 animate-slide-in-left">
+                  <p className="text-xs tracking-widest text-[#007bff] mb-2">CURRENT SELECTIONS</p>
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    {selectedShoe && (
+                      <div>
+                        <span className="text-neutral-500">SHOE:</span> <span className="font-bold">{selectedShoe.brand} {selectedShoe.model}</span>
+                      </div>
+                    )}
+                    {categories.length > 0 && (
+                      <div>
+                        <span className="text-neutral-500">CATEGORIES:</span> <span className="font-bold">{categories.join(", ")}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
           {activeStep === 1 && (
-            <div className="grid gap-4 sm:grid-cols-3">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-muted-foreground">Fit</label>
-                <Select
-                  value={fit}
-                  onValueChange={(value) => {
-                    setFit(value as FitValue);
-                    setFitTouched(true);
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {fitOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+            <div className="space-y-6">
+              {/* Step Header */}
+              <div className="mb-6">
+                <div className="text-sm text-[#007bff] mb-2 font-medium">Step 2</div>
+                <h2 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">
+                  Fit, cushion, stability
+                </h2>
+                <p className="text-gray-600">How does the shoe perform?</p>
               </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-muted-foreground">Cushion</label>
-                <Select
-                  value={cushion}
-                  onValueChange={(value) => {
-                    setCushion(value as CushionValue);
-                    setCushionTouched(true);
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {cushionOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="grid gap-4 sm:grid-cols-3">
+                <div className="space-y-2">
+                  <label className="block tracking-wider text-base mb-3">
+                    FIT *
+                  </label>
+                  <Select
+                    value={fit}
+                    onValueChange={(value) => {
+                      setFit(value as FitValue);
+                      setFitTouched(true);
+                    }}
+                  >
+                    <SelectTrigger className="border-2 border-black h-14 tracking-wider shadow-sm hover:shadow-blue-sm transition-all">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {fitOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <label className="block tracking-wider text-base mb-3">
+                    CUSHION *
+                  </label>
+                  <Select
+                    value={cushion}
+                    onValueChange={(value) => {
+                      setCushion(value as CushionValue);
+                      setCushionTouched(true);
+                    }}
+                  >
+                    <SelectTrigger className="border-2 border-black h-14 tracking-wider shadow-sm hover:shadow-blue-sm transition-all">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {cushionOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <label className="block tracking-wider text-base mb-3">
+                    STABILITY *
+                  </label>
+                  <Select
+                    value={stability}
+                    onValueChange={(value) => {
+                      setStability(value as StabilityValue);
+                      setStabilityTouched(true);
+                    }}
+                  >
+                    <SelectTrigger className="border-2 border-black h-14 tracking-wider shadow-sm hover:shadow-blue-sm transition-all">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {stabilityOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-muted-foreground">Stability</label>
-                <Select
-                  value={stability}
-                  onValueChange={(value) => {
-                    setStability(value as StabilityValue);
-                    setStabilityTouched(true);
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {stabilityOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-muted-foreground">
-                  Mileage on shoe ({distanceLabel})
-                </label>
-                <Input
-                  type="number"
-                  min={0}
-                  value={mileage}
-                  onChange={(e) => setMileage(e.target.value)}
-                  placeholder={distanceUnit === "kilometers" ? "Total kilometers" : "Total miles"}
-                />
-              </div>
+              {/* Current Selections - Show in both page and modal layouts */}
+              {(selectedShoe || fit || cushion || stability) && (
+                <div className="border-l-4 border-[#007bff] pl-6 py-4 bg-[#e6f2ff]/30 animate-slide-in-left">
+                  <p className="text-xs tracking-widest text-[#007bff] mb-2">CURRENT SELECTIONS</p>
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    {selectedShoe && (
+                      <div>
+                        <span className="text-neutral-500">SHOE:</span> <span className="font-bold">{selectedShoe.brand} {selectedShoe.model}</span>
+                      </div>
+                    )}
+                    {fit && (
+                      <div>
+                        <span className="text-neutral-500">FIT:</span> <span className="font-bold">{fit.replace(/_/g, " ").toUpperCase()}</span>
+                      </div>
+                    )}
+                    {cushion && (
+                      <div>
+                        <span className="text-neutral-500">CUSHION:</span> <span className="font-bold">{cushion.replace(/_/g, " ").toUpperCase()}</span>
+                      </div>
+                    )}
+                    {stability && (
+                      <div>
+                        <span className="text-neutral-500">STABILITY:</span> <span className="font-bold">{stability.replace(/_/g, " ").toUpperCase()}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
           {activeStep === 2 && (
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-muted-foreground">Pace range</label>
-                <Select
-                  value={paceRange}
-                  onValueChange={(value) => {
-                    const options =
-                      distanceUnit === "kilometers" ? paceRangeOptionsMetric : paceRangeOptionsImperial;
-                    const selected = options.find((option) => option.value === value);
-                    setPaceRange(value);
-                    setPaceRangeLabel(selected?.label ?? "");
-                    setPaceTouched(true);
-                    if (selected) {
-                      setPaceMinutes(selected.minutes.toString());
-                      setPaceSeconds(selected.seconds.toString());
-                    } else {
-                      setPaceMinutes("");
-                      setPaceSeconds("");
-                    }
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue
-                      placeholder={
-                        distanceUnit === "kilometers"
-                          ? "Select pace range per km"
-                          : "Select pace range per mile"
-                      }
+            <div className="space-y-6">
+              {/* Step Header */}
+              <div className="mb-6">
+                <div className="text-sm text-[#007bff] mb-2 font-medium">Step 3</div>
+                <h2 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">
+                  Mileage & profile
+                </h2>
+                <p className="text-gray-600">Tell us about your running</p>
+              </div>
+              <div className="space-y-6">
+                {/* Top row: Pace range and Weight range */}
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <label className="block tracking-wider text-base mb-3">
+                      PACE RANGE *
+                    </label>
+                    <Select
+                      value={paceRange}
+                      onValueChange={(value) => {
+                        const options =
+                          distanceUnit === "kilometers" ? paceRangeOptionsMetric : paceRangeOptionsImperial;
+                        const selected = options.find((option) => option.value === value);
+                        setPaceRange(value);
+                        setPaceRangeLabel(selected?.label ?? "");
+                        setPaceTouched(true);
+                        if (selected) {
+                          setPaceMinutes(selected.minutes.toString());
+                          setPaceSeconds(selected.seconds.toString());
+                        } else {
+                          setPaceMinutes("");
+                          setPaceSeconds("");
+                        }
+                      }}
+                    >
+                      <SelectTrigger className="border-2 border-black h-14 tracking-wider shadow-sm hover:shadow-blue-sm transition-all">
+                        <SelectValue
+                          placeholder={
+                            distanceUnit === "kilometers"
+                              ? "Select pace range per km"
+                              : "Select pace range per mile"
+                          }
+                        />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {(distanceUnit === "kilometers" ? paceRangeOptionsMetric : paceRangeOptionsImperial).map(
+                          (option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ),
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="block tracking-wider text-base mb-3">
+                      WEIGHT RANGE *
+                    </label>
+                    <Select
+                      value={weightRange}
+                      onValueChange={(value) => {
+                        const options =
+                          weightUnit === "kg" ? weightRangeOptionsMetric : weightRangeOptionsImperial;
+                        const selected = options.find((option) => option.value === value);
+                        setWeightRange(value);
+                        setWeightRangeLabel(selected?.label ?? "");
+                        setWeightTouched(true);
+                        if (selected) {
+                          setWeight(toBaseWeight(selected.average));
+                        } else {
+                          setWeight(null);
+                        }
+                      }}
+                    >
+                      <SelectTrigger className="border-2 border-black h-14 tracking-wider shadow-sm hover:shadow-blue-sm transition-all">
+                        <SelectValue placeholder={`Select weight range (${weightLabel})`} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {(weightUnit === "kg" ? weightRangeOptionsMetric : weightRangeOptionsImperial).map(
+                          (option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ),
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {/* Bottom row: Mileage on left, Retired checkbox on right */}
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <label className="block tracking-wider text-base mb-3">
+                      MILEAGE ON SHOE ({distanceLabel.toUpperCase()}) *
+                    </label>
+                    <Input
+                      type="number"
+                      min={0}
+                      step={0.1}
+                      value={mileage}
+                      onChange={(e) => setMileage(e.target.value)}
+                      placeholder={distanceUnit === "kilometers" ? "Enter total kilometers" : "Enter total miles"}
+                      className="border-2 border-black h-14 tracking-wider shadow-sm hover:shadow-blue-sm transition-all placeholder:text-muted-foreground"
                     />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(distanceUnit === "kilometers" ? paceRangeOptionsMetric : paceRangeOptionsImperial).map(
-                      (option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ),
-                    )}
-                  </SelectContent>
-                </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="block tracking-wider text-base mb-3">
+                      SHOE STATUS
+                    </label>
+                    <div className="flex items-center space-x-3 px-3 border-2 border-black rounded-sm h-14 shadow-sm hover:shadow-blue-sm transition-all">
+                      <Checkbox
+                        id="retired"
+                        checked={retired}
+                        onCheckedChange={(checked) => setRetired(checked === true)}
+                        className="border-2 border-black data-[state=checked]:bg-[#007bff] data-[state=checked]:border-[#007bff]"
+                      />
+                      <label
+                        htmlFor="retired"
+                        className="text-sm tracking-wider cursor-pointer leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex-1"
+                      >
+                        Shoe has been retired
+                      </label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <button
+                            type="button"
+                            className="flex-shrink-0 p-1 hover:bg-gray-100 rounded-full transition-colors focus:outline-none"
+                            aria-label="Learn more about retired shoes"
+                          >
+                            <Info className="h-5 w-5 text-gray-500 hover:text-gray-700" />
+                          </button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-80 p-4" side="top" align="end">
+                          <div className="space-y-2">
+                            <h4 className="font-semibold text-sm">About Retired Shoes</h4>
+                            <p className="text-sm text-gray-600 leading-relaxed">
+                              Check this box if the shoe has been retired due to wear or excessive use. 
+                              If the shoe is no longer in use because you don't like it, please indicate 
+                              that in your review description instead.
+                            </p>
+                          </div>
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-muted-foreground">Weight range</label>
-                <Select
-                  value={weightRange}
-                  onValueChange={(value) => {
-                    const options =
-                      weightUnit === "kg" ? weightRangeOptionsMetric : weightRangeOptionsImperial;
-                    const selected = options.find((option) => option.value === value);
-                    setWeightRange(value);
-                    setWeightRangeLabel(selected?.label ?? "");
-                    setWeightTouched(true);
-                    if (selected) {
-                      setWeight(toBaseWeight(selected.average));
-                    } else {
-                      setWeight(null);
-                    }
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={`Select weight range (${weightLabel})`} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(weightUnit === "kg" ? weightRangeOptionsMetric : weightRangeOptionsImperial).map(
-                      (option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ),
+              {/* Current Selections - Show in both page and modal layouts */}
+              {(selectedShoe || fit || cushion || stability || mileage || paceRange || weightRange || categories.length > 0 || retired) && (
+                <div className="border-l-4 border-[#007bff] pl-6 py-4 bg-[#e6f2ff]/30 animate-slide-in-left">
+                  <p className="text-xs tracking-widest text-[#007bff] mb-2">CURRENT SELECTIONS</p>
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    {selectedShoe && (
+                      <div>
+                        <span className="text-neutral-500">SHOE:</span> <span className="font-bold">{selectedShoe.brand} {selectedShoe.model}</span>
+                      </div>
                     )}
-                  </SelectContent>
-                </Select>
-              </div>
+                    {fit && (
+                      <div>
+                        <span className="text-neutral-500">FIT:</span> <span className="font-bold">{fit.replace(/_/g, " ").toUpperCase()}</span>
+                      </div>
+                    )}
+                    {cushion && (
+                      <div>
+                        <span className="text-neutral-500">CUSHION:</span> <span className="font-bold">{cushion.replace(/_/g, " ").toUpperCase()}</span>
+                      </div>
+                    )}
+                    {stability && (
+                      <div>
+                        <span className="text-neutral-500">STABILITY:</span> <span className="font-bold">{stability.replace(/_/g, " ").toUpperCase()}</span>
+                      </div>
+                    )}
+                    {mileage && (
+                      <div>
+                        <span className="text-neutral-500">MILEAGE:</span> <span className="font-bold">{mileage} {distanceLabel}</span>
+                      </div>
+                    )}
+                    {paceRange && paceRangeLabel && (
+                      <div>
+                        <span className="text-neutral-500">PACE:</span> <span className="font-bold">{paceRangeLabel}</span>
+                      </div>
+                    )}
+                    {weightRange && weightRangeLabel && (
+                      <div>
+                        <span className="text-neutral-500">WEIGHT:</span> <span className="font-bold">{weightRangeLabel}</span>
+                      </div>
+                    )}
+                    {categories.length > 0 && (
+                      <div>
+                        <span className="text-neutral-500">CATEGORIES:</span> <span className="font-bold">{categories.join(", ")}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
           {activeStep === 3 && (
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <StarRating
-                  value={rating}
-                  onChange={(val) => {
-                    setRating(val);
-                    setRatingTouched(true);
-                  }}
-                  size="lg"
-                />
-                {ratingTouched ? (
-                  <span className="text-sm text-muted-foreground">{rating}/5</span>
-                ) : null}
+            <div className="space-y-6">
+              {/* Step Header */}
+              <div className="mb-6">
+                <div className="text-sm text-[#007bff] mb-2 font-medium">Step 4</div>
+                <h2 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">
+                  Rating & review
+                </h2>
+                <p className="text-gray-600">Share your honest experience</p>
               </div>
-              <Textarea
-                rows={4}
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                placeholder="Tell other runners about the fit, ride, and how you use this shoe."
-              />
+              
+              {/* Rating */}
+              <div>
+                <label className="block mb-4 tracking-wider text-base">
+                  OVERALL RATING *
+                </label>
+                <div className="flex gap-3 mb-3">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => {
+                        setRating(star);
+                        setRatingTouched(true);
+                      }}
+                      onMouseEnter={() => setRatingTouched(true)}
+                      className="transition-all hover:scale-125 active:scale-95"
+                    >
+                      <Star
+                        className={cn(
+                          "size-12 transition-all duration-200",
+                          star <= rating
+                            ? 'fill-[#007bff] text-[#007bff] drop-shadow-md'
+                            : 'text-neutral-300 hover:text-neutral-400'
+                        )}
+                      />
+                    </button>
+                  ))}
+                </div>
+                {rating > 0 && (
+                  <p className="tracking-wide text-neutral-600">
+                    {rating === 1 && "Poor - Would not recommend"}
+                    {rating === 2 && "Fair - Below expectations"}
+                    {rating === 3 && "Good - Meets expectations"}
+                    {rating === 4 && "Very Good - Exceeds expectations"}
+                    {rating === 5 && "Excellent - Highly recommend"}
+                  </p>
+                )}
+              </div>
+
+              {/* Review Text */}
+              <div>
+                <label className="block mb-3 tracking-wider text-base">
+                  YOUR REVIEW *
+                </label>
+                <Textarea
+                  rows={10}
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                  placeholder="Tell other runners about the fit, ride, and how you use this shoe."
+                  className="border-2 border-black min-h-[240px] resize-none tracking-wide shadow-sm hover:shadow-blue-sm transition-all"
+                  maxLength={1000}
+                />
+                <div className="flex justify-between items-center mt-2">
+                  <p className="text-sm text-neutral-500 tracking-wide">
+                    {comment.length} / 1000 characters
+                  </p>
+                  {comment.length >= 50 && (
+                    <p className="text-sm text-[#007bff] tracking-wide">Looking good! ✓</p>
+                  )}
+                </div>
+              </div>
             </div>
           )}
 
-          <ReviewSummary
-            shoe={selectedShoe?.label}
-            fit={fit}
-            cushion={cushion}
-            stability={stability}
-            fitTouched={fitTouched}
-            cushionTouched={cushionTouched}
-            stabilityTouched={stabilityTouched}
-            mileage={mileage}
-            paceRangeLabel={paceRangeLabel}
-            paceTouched={paceTouched}
-            rating={rating}
-            ratingTouched={ratingTouched}
-            comment={comment}
-            weightRangeLabel={weightRangeLabel}
-            weightTouched={weightTouched}
-          />
+          {/* Review Summary - Show in both page and modal layouts when on step 3 */}
+          {activeStep === 3 && rating > 0 && comment.length > 0 && (
+            <div className="border-l-4 border-[#007bff] pl-6 py-4 bg-[#e6f2ff]/30 animate-slide-in-left">
+              <p className="text-xs tracking-widest text-[#007bff] mb-2">REVIEW SUMMARY</p>
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                {selectedShoe && (
+                  <div>
+                    <span className="text-neutral-500">SHOE:</span> <span className="font-bold">{selectedShoe.label}</span>
+                  </div>
+                )}
+                {fitTouched && (
+                  <div>
+                    <span className="text-neutral-500">FIT:</span> <span className="font-bold">{fit.replace(/_/g, " ")}</span>
+                  </div>
+                )}
+                {cushionTouched && (
+                  <div>
+                    <span className="text-neutral-500">CUSHION:</span> <span className="font-bold">{cushion.replace(/_/g, " ")}</span>
+                  </div>
+                )}
+                {stabilityTouched && (
+                  <div>
+                    <span className="text-neutral-500">STABILITY:</span> <span className="font-bold">{stability.replace(/_/g, " ")}</span>
+                  </div>
+                )}
+                {mileage && (
+                  <div>
+                    <span className="text-neutral-500">MILEAGE:</span> <span className="font-bold">{mileage} {distanceLabel}</span>
+                  </div>
+                )}
+                {paceTouched && paceRangeLabel && (
+                  <div>
+                    <span className="text-neutral-500">PACE:</span> <span className="font-bold">{paceRangeLabel}</span>
+                  </div>
+                )}
+                {weightTouched && weightRangeLabel && (
+                  <div>
+                    <span className="text-neutral-500">WEIGHT:</span> <span className="font-bold">{weightRangeLabel}</span>
+                  </div>
+                )}
+                {categoriesTouched && categories.length > 0 && (
+                  <div>
+                    <span className="text-neutral-500">CATEGORIES:</span> <span className="font-bold">{categories.join(", ")}</span>
+                  </div>
+                )}
+                {retired && (
+                  <div>
+                    <span className="text-neutral-500">STATUS:</span> <span className="font-bold text-orange-600">RETIRED</span>
+                  </div>
+                )}
+                {ratingTouched && (
+                  <div className="col-span-2">
+                    <span className="text-neutral-500">RATING:</span> 
+                    <span className="ml-2">
+                      {[...Array(rating)].map((_, i) => (
+                        <Star key={i} className="inline size-4 fill-[#007bff] text-[#007bff]" />
+                      ))}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
-          <div className="flex items-center justify-between pt-2">
-            <Button variant="outline" disabled={activeStep === 0} onClick={handleBack}>
-              Back
+          <div className={cn(
+            "flex items-center justify-between",
+            "mt-8 pt-6 border-t-2 border-black"
+          )}>
+            <Button
+              variant="ghost"
+              disabled={activeStep === 0}
+              onClick={handleBack}
+              className="border-2 border-black hover:bg-black hover:text-white transition-all h-14 px-8 tracking-wider shadow-sm hover:shadow-black-crisp group"
+            >
+              <ArrowLeft className="size-5 mr-2 group-hover:-translate-x-1 transition-transform" />
+              {activeStep === 0 ? 'CANCEL' : 'BACK'}
             </Button>
             {activeStep < steps.length - 1 && (
-              <Button disabled={!canContinue} onClick={handleNext}>
-                Continue
+              <Button
+                disabled={!canContinue}
+                onClick={handleNext}
+                className="gradient-blue-vibrant text-white hover:opacity-90 h-14 px-12 tracking-wider shadow-black-crisp hover:shadow-blue-md transition-all group disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                CONTINUE
+                <ArrowRight className="size-5 ml-2 group-hover:translate-x-1 transition-transform" />
               </Button>
             )}
             {activeStep === steps.length - 1 && (
-              <Button onClick={submit}>
-                Submit review
+              <Button
+                onClick={submit}
+                disabled={!canContinue}
+                className="gradient-blue-vibrant text-white hover:opacity-90 h-14 px-12 tracking-wider shadow-black-crisp hover:shadow-blue-md transition-all group disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Check className="size-5 mr-2" />
+                SUBMIT REVIEW
               </Button>
             )}
           </div>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }

@@ -17,6 +17,7 @@ interface Review {
   rating: number;
   comment: string;
   createdAt?: string | null;
+  updatedAt?: string | null;
   user: { id: number; name: string };
   shoe: { id?: number; brand: string; model: string };
   shoeId?: number;
@@ -32,6 +33,8 @@ interface Review {
   weight?: number | null; // legacy
   paceRange?: string | null;
   weightRange?: string | null;
+  categories?: string[] | null;
+  retired?: boolean | null;
 }
 
 const PAGE_SIZE = 15;
@@ -204,6 +207,7 @@ export default function AllReviewsPage() {
       rating={review.rating}
       comment={review.comment}
       createdAt={review.createdAt}
+      updatedAt={review.updatedAt}
       userName={review.user.name}
       shoeBrand={review.shoe.brand}
       shoeModel={review.shoe.model}
@@ -221,10 +225,11 @@ export default function AllReviewsPage() {
           paceMinutes: review.paceMinutes ?? null,
           paceSeconds: review.paceSeconds ?? null,
           weight: review.weight ?? null,
-          paceRange: review.paceRange ?? null,
-          weightRange: review.weightRange ?? null,
-        })
-      }
+              paceRange: review.paceRange ?? null,
+              weightRange: review.weightRange ?? null,
+              retired: review.retired ?? null,
+            })
+          }
       onDelete={() => openConfirm(review.id)}
       showLink={!!(review.shoeId || review.shoe.id)}
       shoeId={review.shoeId || review.shoe.id}
@@ -243,6 +248,8 @@ export default function AllReviewsPage() {
       weight={review.weight ?? undefined}
       paceRange={review.paceRange ?? undefined}
       weightRange={review.weightRange ?? undefined}
+      categories={review.categories ?? undefined}
+      retired={review.retired ?? undefined}
     />
   );
 

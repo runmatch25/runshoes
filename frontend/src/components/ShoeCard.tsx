@@ -74,30 +74,38 @@ export default function ShoeCard({
 
         {/* Content */}
         <div className="p-6 space-y-4 bg-white group-hover:bg-gradient-to-br group-hover:from-white group-hover:to-[#e6f2ff]/30 transition-all duration-300">
-          {/* Category & Reviews */}
+          {/* Brand & Reviews */}
           <div className="flex items-center justify-between border-b-2 border-neutral-200 group-hover:border-[#007bff] pb-3 transition-colors">
-            <span className="tracking-widest text-xs text-[#007bff] font-bold">{type.toUpperCase()}</span>
+            <span className="tracking-widest text-xs text-[#007bff] font-bold">{brand.toUpperCase()}</span>
             <span className="tracking-widest text-xs text-neutral-500 group-hover:text-[#007bff] transition-colors">{reviewCount} REVIEWS</span>
           </div>
 
           {/* Shoe Name */}
           <h3 className="text-xl tracking-tight leading-tight min-h-[3.5rem] group-hover:text-[#007bff] transition-colors font-bold">
-            {brand} {model}
+            {model}
           </h3>
 
           {/* Rating */}
           <div className="flex items-center gap-3 pt-2">
             <div className="flex items-center gap-0.5">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <Star
-                  key={star}
-                  className={`size-4 transition-all duration-300 ${
-                    star <= roundedRating
-                      ? 'fill-[#007bff] text-[#007bff] group-hover:scale-110'
-                      : 'fill-neutral-200 text-neutral-200'
-                  }`}
-                />
-              ))}
+              {[1, 2, 3, 4, 5].map((star) => {
+                const fraction = Math.max(0, Math.min(1, rating - (star - 1)));
+                return (
+                  <div key={star} className="relative transition-all duration-300 group-hover:scale-110">
+                    <Star
+                      className="size-4 fill-neutral-200 text-neutral-200"
+                    />
+                    {fraction > 0 && (
+                      <div
+                        className="absolute inset-0 overflow-hidden"
+                        style={{ width: `${fraction * 100}%` }}
+                      >
+                        <Star className="size-4 fill-[#007bff] text-[#007bff]" />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
             <span className="tracking-wider font-bold text-neutral-700 group-hover:text-[#007bff] transition-colors">{displayRating}</span>
           </div>

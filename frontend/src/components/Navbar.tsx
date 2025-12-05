@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useUnitPreferences } from "@/context/UnitPreferencesContext";
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Menu, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -13,22 +13,65 @@ export default function Navbar() {
   const { user, logout } = useAuth();
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
+  const lastScrollY = useRef(0);
   const { distanceUnit, weightUnit, toggleDistanceUnit, toggleWeightUnit, distanceLabel, weightLabel } = useUnitPreferences();
+
+  // Scroll detection for hide/show navbar
+  useEffect(() => {
+    // Disable scroll-based hiding on review page to prevent navbar flickering
+    // when step content height changes
+    if (pathname?.startsWith("/review")) {
+      setIsVisible(true);
+      return;
+    }
+
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      const scrollDelta = Math.abs(currentScrollY - lastScrollY.current);
+      
+      // Only react to significant scroll changes (more than 5px) to prevent
+      // navbar flickering from small layout shifts
+      if (scrollDelta < 5) {
+        return;
+      }
+      
+      // Show navbar when at top of page
+      if (currentScrollY < 10) {
+        setIsVisible(true);
+      } 
+      // Hide when scrolling down, show when scrolling up
+      else if (currentScrollY > lastScrollY.current) {
+        setIsVisible(false);
+      } else {
+        setIsVisible(true);
+      }
+      
+      lastScrollY.current = currentScrollY;
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [pathname]);
 
   // Determine active tab based on pathname
   const getActiveTab = () => {
+    if (pathname === "/") return null; // Frontpage - no active tab
     if (pathname?.startsWith("/shoes")) return "shoes";
     if (pathname?.startsWith("/reviews")) return "reviews";
     if (pathname?.startsWith("/review")) return "submit";
     if (pathname?.startsWith("/profile")) return "profile";
     if (pathname?.startsWith("/about")) return "about";
-    return "shoes";
+    return null;
   };
 
   const activeTab = getActiveTab();
 
   return (
-    <header className="bg-white border-b-2 border-black sticky top-0 z-50 shadow-sm">
+    <header className={cn(
+      "bg-white border-b-2 border-black sticky top-0 z-50 shadow-sm transition-transform duration-300",
+      isVisible ? "translate-y-0" : "-translate-y-full"
+    )}>
       <div className="max-w-[1600px] mx-auto px-6 lg:px-12">
         <div className="flex items-center justify-between h-20">
           {/* Logo */}

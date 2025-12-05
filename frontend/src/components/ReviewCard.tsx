@@ -4,12 +4,14 @@ import { Star, ThumbsUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatDateISOToMMDDYYYY } from "@/lib/formatDate";
 import { useUnitPreferences } from "@/context/UnitPreferencesContext";
+import { useRouter } from "next/navigation";
 
 interface ReviewCardProps {
   id: number;
   rating: number;
   comment: string;
   createdAt?: string | null;
+  updatedAt?: string | null;
   userName: string;
   shoeBrand?: string;
   shoeModel?: string;
@@ -35,6 +37,8 @@ interface ReviewCardProps {
   weight?: number; // legacy
   paceRange?: string; // pace range identifier
   weightRange?: string; // weight range identifier
+  categories?: string[]; // shoe categories
+  retired?: boolean; // shoe has been retired
 }
 
 // Format enum values for display
@@ -55,21 +59,25 @@ const formatStability = (stability?: string): string => {
 
 // Range options mapping (matching ReviewWizard)
 const paceRangeOptionsImperial = [
-  { value: "pace-mile-slower-than-11", label: ">11:00/mile" },
-  { value: "pace-mile-9-31-to-10-59", label: "9:31 – 10:59/mile" },
-  { value: "pace-mile-8-01-to-9-30", label: "8:01 – 9:30/mile" },
-  { value: "pace-mile-6-31-to-8-00", label: "6:31 – 8:00/mile" },
-  { value: "pace-mile-5-51-to-6-30", label: "5:51 – 6:30/mile" },
-  { value: "pace-mile-faster-than-5-50", label: "<5:50/mile" },
+  { value: "pace-mile-faster-than-6-00", label: "<6:00/mile" },
+  { value: "pace-mile-6-00-to-6-59", label: "6:00 – 6:59/mile" },
+  { value: "pace-mile-7-00-to-7-59", label: "7:00 – 7:59/mile" },
+  { value: "pace-mile-8-00-to-8-59", label: "8:00 – 8:59/mile" },
+  { value: "pace-mile-9-00-to-9-59", label: "9:00 – 9:59/mile" },
+  { value: "pace-mile-10-00-to-10-59", label: "10:00 – 10:59/mile" },
+  { value: "pace-mile-11-00-to-11-59", label: "11:00 – 11:59/mile" },
+  { value: "pace-mile-12-00-or-slower", label: "≥12:00/mile" },
 ];
 
 const paceRangeOptionsMetric = [
-  { value: "pace-km-slower-than-6-50", label: ">6:50/km" },
-  { value: "pace-km-5-35-to-6-49", label: "5:35 – 6:49/km" },
-  { value: "pace-km-4-40-to-5-34", label: "4:40 – 5:34/km" },
-  { value: "pace-km-3-45-to-4-39", label: "3:45 – 4:39/km" },
-  { value: "pace-km-3-15-to-3-44", label: "3:15 – 3:44/km" },
-  { value: "pace-km-faster-than-3-15", label: "<3:15/km" },
+  { value: "pace-km-faster-than-3-45", label: "<3:45/km" },
+  { value: "pace-km-3-45-to-4-19", label: "3:45 – 4:19/km" },
+  { value: "pace-km-4-20-to-4-59", label: "4:20 – 4:59/km" },
+  { value: "pace-km-5-00-to-5-39", label: "5:00 – 5:39/km" },
+  { value: "pace-km-5-40-to-6-19", label: "5:40 – 6:19/km" },
+  { value: "pace-km-6-20-to-6-59", label: "6:20 – 6:59/km" },
+  { value: "pace-km-7-00-to-7-29", label: "7:00 – 7:29/km" },
+  { value: "pace-km-7-30-or-slower", label: "≥7:30/km" },
 ];
 
 const weightRangeOptionsImperial = [
@@ -103,17 +111,39 @@ const getWeightRangeLabel = (weightRange?: string, weightUnit?: string): string 
   return options.find(opt => opt.value === weightRange)?.label || null;
 };
 
+// Category color mapping
+const getCategoryColor = (category: string): { bg: string; text: string } => {
+  switch (category) {
+    case "Daily trainer":
+      return { bg: "#007bff", text: "#ffffff" };
+    case "Tempo":
+      return { bg: "#FF8A3D", text: "#ffffff" };
+    case "Racing":
+      return { bg: "#E53935", text: "#ffffff" };
+    case "Long run":
+      return { bg: "#4CAF50", text: "#ffffff" };
+    case "Trail":
+      return { bg: "#6D4C41", text: "#ffffff" };
+    default:
+      return { bg: "#6b7280", text: "#ffffff" };
+  }
+};
+
 export default function ReviewCard({
+  id,
   rating,
   comment,
   userName,
   createdAt,
+  updatedAt,
   formattedDate,
   canEdit = false,
   onEdit,
   onDelete,
   showLink = true,
   shoeId,
+  shoeBrand,
+  shoeModel,
   helpfulCount = 0,
   notHelpfulCount = 0,
   userVote = 0,
@@ -129,8 +159,11 @@ export default function ReviewCard({
   weight,
   paceRange,
   weightRange,
+  categories,
+  retired,
 }: ReviewCardProps) {
   const { formatDistance, formatPace, formatWeight, distanceUnit, weightUnit } = useUnitPreferences();
+  const router = useRouter();
   // Create subtle depth variations with different border styles
   const getBorderStyle = () => {
     const styles = [
@@ -160,36 +193,102 @@ export default function ReviewCard({
     };
   };
 
-  const displayDate = formattedDate || (createdAt ? formatDateISOToMMDDYYYY(createdAt) : '');
+  // Determine if review has been updated
+  // Compare dates by converting to timestamps to handle string comparisons correctly
+  const hasBeenUpdated = updatedAt && createdAt && new Date(updatedAt).getTime() !== new Date(createdAt).getTime();
+  const createdDate = formattedDate || (createdAt ? formatDateISOToMMDDYYYY(createdAt) : '');
+  const updatedDate = updatedAt ? formatDateISOToMMDDYYYY(updatedAt) : '';
+
+  const handleCardClick = () => {
+    if (shoeId && showLink) {
+      router.push(`/shoes/${shoeId}#review-${id}`);
+    }
+  };
+
+  const isClickable = shoeId && showLink;
 
   return (
     <div 
-      className={`${getBackgroundStyle()} border ${getBorderStyle()} hover:shadow-[12px_12px_0px_0px_rgba(0,123,255,0.3)] transition-all duration-300 h-full`}
+      className={`${getBackgroundStyle()} border ${getBorderStyle()} hover:shadow-[12px_12px_0px_0px_rgba(0,123,255,0.3)] transition-all duration-300 h-full ${isClickable ? 'cursor-pointer' : ''}`}
       style={getTransform()}
+      onClick={isClickable ? handleCardClick : undefined}
     >
       <div className="p-5 lg:p-6 h-full flex flex-col">
         {/* Header */}
         <div className="flex items-start justify-between gap-4 mb-3">
           <div className="flex-1">
             <h3 className="text-xl tracking-tight mb-2 font-bold">{userName.toUpperCase()}</h3>
+            {shoeBrand && shoeModel && (
+              <div className="flex items-center gap-2 mb-2">
+                <p className="text-sm text-[#007bff] tracking-wider font-semibold">
+                  {shoeBrand.toUpperCase()} {shoeModel.toUpperCase()}
+                </p>
+                {retired && (
+                  <span className="px-2 py-0.5 bg-orange-100 text-orange-700 text-xs font-semibold tracking-wider border border-orange-300 rounded">
+                    RETIRED
+                  </span>
+                )}
+              </div>
+            )}
+            {categories && categories.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-3">
+                {categories.map((category) => {
+                  const colors = getCategoryColor(category);
+                  return (
+                    <span
+                      key={category}
+                      className="px-3 py-1 rounded-full text-xs font-medium tracking-wide"
+                      style={{
+                        backgroundColor: colors.bg,
+                        color: colors.text,
+                      }}
+                    >
+                      {category}
+                    </span>
+                  );
+                })}
+              </div>
+            )}
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-0.5">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <Star
-                    key={star}
-                    className={`size-4 ${
-                      star <= rating
-                        ? 'fill-[#007bff] text-[#007bff]'
-                        : 'fill-neutral-200 text-neutral-200'
-                    }`}
-                  />
-                ))}
+                {[1, 2, 3, 4, 5].map((star) => {
+                  const filled = rating >= star;
+                  const fraction = Math.max(0, Math.min(1, rating - (star - 1)));
+                  return (
+                    <div key={star} className="relative">
+                      <Star
+                        className="size-4 fill-neutral-200 text-neutral-200"
+                      />
+                      {fraction > 0 && (
+                        <div
+                          className="absolute inset-0 overflow-hidden"
+                          style={{ width: `${fraction * 100}%` }}
+                        >
+                          <Star className="size-4 fill-[#007bff] text-[#007bff]" />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
-              <span className="tracking-wider text-sm">{rating}.0</span>
+              <span className="tracking-wider text-sm">{rating.toFixed(1)}</span>
             </div>
           </div>
-          {displayDate && (
-            <span className="tracking-widest text-xs text-neutral-400 whitespace-nowrap">{displayDate}</span>
+          {createdDate && (
+            <div className="flex flex-col items-end gap-1">
+              {hasBeenUpdated ? (
+                <>
+                  <span className="tracking-widest text-xs text-neutral-400 whitespace-nowrap">
+                    Updated {updatedDate}
+                  </span>
+                  <span className="tracking-widest text-xs text-neutral-300 whitespace-nowrap">
+                    Created {createdDate}
+                  </span>
+                </>
+              ) : (
+                <span className="tracking-widest text-xs text-neutral-400 whitespace-nowrap">{createdDate}</span>
+              )}
+            </div>
           )}
         </div>
 

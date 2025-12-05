@@ -67,12 +67,26 @@ export function StarRating({
             <Star
               className={cn(
                 sizeClasses[size],
-                "transition-colors",
-                filled ? "text-primary" : "text-border group-hover:text-primary"
+                "transition-colors text-border group-hover:text-primary"
               )}
               strokeWidth={1.5}
-              fill={filled ? "currentColor" : "none"}
+              fill="none"
             />
+            {fraction > 0 && (
+              <div
+                className="absolute inset-0 overflow-hidden"
+                style={{ width: `${Math.min(1, Math.max(0, fraction)) * 100}%` }}
+              >
+                <Star
+                  className={cn(
+                    sizeClasses[size],
+                    "text-primary transition-colors"
+                  )}
+                  strokeWidth={1.5}
+                  fill="currentColor"
+                />
+              </div>
+            )}
             <span className="sr-only">{starNumber} star{starNumber > 1 ? "s" : ""}</span>
           </button>
         );

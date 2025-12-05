@@ -1,11 +1,11 @@
 import Link from "next/link";
-import { fetchShoes } from "../lib/api";
-import Footer from "@/components/Footer";
+import { fetchShoes, fetchReviews } from "../lib/api";
 import ShoeCard from "@/components/ShoeCard";
 import { ScrollingStats } from "@/components/ScrollingStats";
+import FeaturedReview from "@/components/FeaturedReview";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, ArrowRight } from "lucide-react";
+import { Search, ArrowRight, Users, Footprints, MessageSquare } from "lucide-react";
 
 type Shoe = {
   id: number;
@@ -33,6 +33,7 @@ function latestReviewDate(reviews?: { createdAt?: string }[] | undefined): strin
 
 export default async function HomePage() {
   const shoes: Shoe[] = await fetchShoes();
+  const reviews = await fetchReviews();
 
   // Compute average ratings and pick top 5
   const withAvg = shoes.map((s) => ({
@@ -56,11 +57,62 @@ export default async function HomePage() {
     .sort((a, b) => new Date(b.latestReviewISO).getTime() - new Date(a.latestReviewISO).getTime())
     .slice(0, 10);
 
+  // Select featured reviews - prioritize high ratings, helpful reviews, and good comments
+  type ReviewWithDetails = {
+    id: number;
+    rating: number;
+    comment: string;
+    shoe?: { brand: string; model: string } | null;
+    user?: { name: string } | null;
+    paceMinutes?: number | null;
+    paceSeconds?: number | null;
+    paceRange?: string | null;
+    helpfulCount?: number;
+    notHelpfulCount?: number;
+  };
+
+  const featuredReviews = (reviews as any[])
+    .filter((r: ReviewWithDetails) => {
+      // Filter for reviews with good comments (at least 50 chars) and shoe/user info
+      return (
+        r.comment &&
+        r.comment.length >= 50 &&
+        r.shoe &&
+        r.shoe.brand &&
+        r.shoe.model &&
+        r.user &&
+        r.user.name
+      );
+    })
+    .map((r: ReviewWithDetails) => ({
+      id: r.id,
+      rating: r.rating,
+      comment: r.comment,
+      shoeBrand: r.shoe!.brand,
+      shoeModel: r.shoe!.model,
+      userName: r.user!.name,
+      paceMinutes: r.paceMinutes ?? null,
+      paceSeconds: r.paceSeconds ?? null,
+      paceRange: r.paceRange ?? null,
+      helpfulCount: r.helpfulCount ?? 0,
+      notHelpfulCount: r.notHelpfulCount ?? 0,
+      score: r.rating * 2 + (r.helpfulCount ?? 0) - (r.notHelpfulCount ?? 0), // Scoring for selection
+    }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 3) // Take top 3 for featured
+    .map(({ score, helpfulCount, notHelpfulCount, ...rest }) => rest); // Remove scoring fields
+
+  // Calculate stats for quick info
+  const totalReviews = reviews.length;
+  const totalShoes = shoes.length;
+  // Count unique runners (users who have written reviews)
+  const uniqueRunners = new Set(reviews.map((r: any) => r.userId || r.user?.id).filter(Boolean)).size;
+
   return (
     <main className="min-h-screen bg-white">
       <div className="max-w-[1600px] mx-auto px-6 lg:px-12">
         {/* Hero Section */}
-        <section className="py-16 lg:py-24 border-b-2 border-black relative overflow-hidden">
+        <section className="pt-8 lg:pt-12 pb-16 lg:pb-24 border-b-2 border-black relative overflow-hidden">
           {/* Animated background accent */}
           <div className="absolute top-0 right-0 w-1/3 h-full opacity-5 pointer-events-none">
             <div className="w-full h-full gradient-blue-light"></div>
@@ -81,12 +133,36 @@ export default async function HomePage() {
                   EVERY SHOE.<br />
                   <span className="text-[#007bff] relative">
                     REAL REVIEWS.
-                    <div className="absolute -bottom-2 left-0 w-24 h-1 bg-[#007bff]"></div>
                   </span>
                 </h1>
                 <p className="text-neutral-600 text-lg mb-8 max-w-md leading-relaxed animate-fade-in animate-delay-200">
                   Join thousands of runners sharing their experiences. Compare results across paces, distances, and running styles.
                 </p>
+              </div>
+
+              {/* Quick Info Section */}
+              <div className="grid grid-cols-3 gap-4 mb-8 border-2 border-black p-4 bg-white animate-fade-in animate-delay-250">
+                <div className="text-center">
+                  <div className="flex items-center justify-center mb-2">
+                    <Footprints className="size-5 text-[#007bff] mr-1" />
+                    <span className="text-2xl font-bold tracking-tight">{totalShoes}</span>
+                  </div>
+                  <span className="text-xs tracking-widest text-neutral-500 uppercase">Shoes</span>
+                </div>
+                <div className="text-center border-x-2 border-black">
+                  <div className="flex items-center justify-center mb-2">
+                    <MessageSquare className="size-5 text-[#007bff] mr-1" />
+                    <span className="text-2xl font-bold tracking-tight">{totalReviews}</span>
+                  </div>
+                  <span className="text-xs tracking-widest text-neutral-500 uppercase">Reviews</span>
+                </div>
+                <div className="text-center">
+                  <div className="flex items-center justify-center mb-2">
+                    <Users className="size-5 text-[#007bff] mr-1" />
+                    <span className="text-2xl font-bold tracking-tight">{uniqueRunners}</span>
+                  </div>
+                  <span className="text-xs tracking-widest text-neutral-500 uppercase">Runners</span>
+                </div>
               </div>
 
               {/* Search */}
@@ -113,19 +189,23 @@ export default async function HomePage() {
               </Button>
             </div>
 
-            {/* Right Image */}
-            <div className="relative animate-slide-in-right">
-              <div className="aspect-[4/5] bg-gradient-to-br from-[#e6f2ff] to-[#b3d9ff] overflow-hidden border-2 border-black shadow-black-crisp-lg hover:shadow-blue-lg transition-all duration-500">
-                <img
-                  src="https://images.unsplash.com/photo-1758506971661-33fe941ca1e2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxydW5uZXIlMjB0cmFjayUyMGJsYWNrJTIwd2hpdGV8ZW58MXx8fHwxNzYzNDE2NjU1fDA&ixlib=rb-4.1.0&q=80&w=1080"
-                  alt="Runner"
-                  className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-700"
-                />
+            {/* Right: Featured Review */}
+            {featuredReviews.length > 0 ? (
+              <FeaturedReview reviews={featuredReviews} />
+            ) : (
+              <div className="relative animate-slide-in-right">
+                <div className="aspect-[3/4] bg-gradient-to-br from-[#e6f2ff] to-[#b3d9ff] overflow-hidden border-2 border-black shadow-black-crisp-lg hover:shadow-blue-lg transition-all duration-500">
+                  <img
+                    src="https://images.unsplash.com/photo-1758506971661-33fe941ca1e2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxydW5uZXIlMjB0cmFjayUyMGJsYWNrJTIwd2hpdGV8ZW58MXx8fHwxNzYzNDE2NjU1fDA&ixlib=rb-4.1.0&q=80&w=1080"
+                    alt="Runner"
+                    className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-700"
+                  />
+                </div>
+                <div className="absolute top-4 left-4 bg-white px-3 py-1.5 border-2 border-black shadow-black-crisp">
+                  <span className="tracking-wider text-xs">UNSPLASH</span>
+                </div>
               </div>
-              <div className="absolute bottom-4 right-4 bg-white px-3 py-1.5 border-2 border-black shadow-black-crisp">
-                <span className="tracking-wider">UNSPLASH</span>
-              </div>
-            </div>
+            )}
           </div>
         </section>
       </div>
@@ -139,10 +219,13 @@ export default async function HomePage() {
           <div className="flex items-end justify-between mb-12 animate-fade-in">
             <div>
               <span className="tracking-widest text-[#007bff] block mb-2 font-bold">001</span>
-              <h2 className="text-4xl lg:text-5xl tracking-tighter relative inline-block font-bold">
+              <h2 className="text-4xl lg:text-5xl tracking-tighter relative inline-block font-bold mb-2">
                 TOP RATED
                 <div className="absolute -bottom-1 left-0 w-16 h-1 bg-[#007bff]"></div>
               </h2>
+              <p className="text-neutral-600 text-base tracking-wide">
+                Highest rated by the community
+              </p>
             </div>
             <Button 
               variant="ghost" 
@@ -187,10 +270,13 @@ export default async function HomePage() {
           <div className="flex items-end justify-between mb-12 animate-fade-in">
             <div>
               <span className="tracking-widest text-[#007bff] block mb-2 font-bold">002</span>
-              <h2 className="text-4xl lg:text-5xl tracking-tighter relative inline-block font-bold">
+              <h2 className="text-4xl lg:text-5xl tracking-tighter relative inline-block font-bold mb-2">
                 RECENT REVIEWS
                 <div className="absolute -bottom-1 left-0 w-16 h-1 bg-[#007bff]"></div>
               </h2>
+              <p className="text-neutral-600 text-base tracking-wide">
+                Latest reviews from the community
+              </p>
             </div>
             <Button 
               variant="ghost" 
@@ -233,7 +319,6 @@ export default async function HomePage() {
         </section>
       </div>
 
-      <Footer />
     </main>
   );
 }

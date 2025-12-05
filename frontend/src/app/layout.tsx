@@ -2,6 +2,7 @@
 
 import React from "react";
 import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 import { AuthProvider } from "@/context/AuthContext";
 import { UnitPreferencesProvider } from "@/context/UnitPreferencesContext";
 import { Space_Grotesk, Bebas_Neue } from "next/font/google";
@@ -33,6 +34,7 @@ export default function RootLayout({
             <div className="min-h-screen bg-background text-foreground">
               <Navbar />
               {children}
+              <Footer />
             </div>
           </UnitPreferencesProvider>
         </AuthProvider>

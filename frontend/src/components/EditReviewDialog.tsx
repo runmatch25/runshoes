@@ -11,9 +11,8 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { StarRating } from "@/components/StarRating";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -21,7 +20,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Info, Star } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { useUnitPreferences } from "@/context/UnitPreferencesContext";
+import ConfirmDialog from "@/components/ConfirmDialog";
 
 export type EditableReview = {
   id: number;
@@ -36,6 +39,7 @@ export type EditableReview = {
   weight?: number | null; // legacy
   paceRange?: string | null;
   weightRange?: string | null;
+  retired?: boolean | null;
 };
 
 interface Props {
@@ -77,55 +81,71 @@ const stabilityOptions = [
 
 const paceRangeOptionsImperial = [
   {
-    value: "pace-mile-slower-than-11",
-    label: ">11:00/mile",
+    value: "pace-mile-faster-than-6-00",
+    label: "<6:00/mile",
   },
   {
-    value: "pace-mile-9-31-to-10-59",
-    label: "9:31 – 10:59/mile",
+    value: "pace-mile-6-00-to-6-59",
+    label: "6:00 – 6:59/mile",
   },
   {
-    value: "pace-mile-8-01-to-9-30",
-    label: "8:01 – 9:30/mile",
+    value: "pace-mile-7-00-to-7-59",
+    label: "7:00 – 7:59/mile",
   },
   {
-    value: "pace-mile-6-31-to-8-00",
-    label: "6:31 – 8:00/mile",
+    value: "pace-mile-8-00-to-8-59",
+    label: "8:00 – 8:59/mile",
   },
   {
-    value: "pace-mile-5-51-to-6-30",
-    label: "5:51 – 6:30/mile",
+    value: "pace-mile-9-00-to-9-59",
+    label: "9:00 – 9:59/mile",
   },
   {
-    value: "pace-mile-faster-than-5-50",
-    label: "<5:50/mile",
+    value: "pace-mile-10-00-to-10-59",
+    label: "10:00 – 10:59/mile",
+  },
+  {
+    value: "pace-mile-11-00-to-11-59",
+    label: "11:00 – 11:59/mile",
+  },
+  {
+    value: "pace-mile-12-00-or-slower",
+    label: "≥12:00/mile",
   },
 ] as const;
 
 const paceRangeOptionsMetric = [
   {
-    value: "pace-km-slower-than-6-50",
-    label: ">6:50/km",
+    value: "pace-km-faster-than-3-45",
+    label: "<3:45/km",
   },
   {
-    value: "pace-km-5-35-to-6-49",
-    label: "5:35 – 6:49/km",
+    value: "pace-km-3-45-to-4-19",
+    label: "3:45 – 4:19/km",
   },
   {
-    value: "pace-km-4-40-to-5-34",
-    label: "4:40 – 5:34/km",
+    value: "pace-km-4-20-to-4-59",
+    label: "4:20 – 4:59/km",
   },
   {
-    value: "pace-km-3-45-to-4-39",
-    label: "3:45 – 4:39/km",
+    value: "pace-km-5-00-to-5-39",
+    label: "5:00 – 5:39/km",
   },
   {
-    value: "pace-km-3-15-to-3-44",
-    label: "3:15 – 3:44/km",
+    value: "pace-km-5-40-to-6-19",
+    label: "5:40 – 6:19/km",
   },
   {
-    value: "pace-km-faster-than-3-15",
-    label: "<3:15/km",
+    value: "pace-km-6-20-to-6-59",
+    label: "6:20 – 6:59/km",
+  },
+  {
+    value: "pace-km-7-00-to-7-29",
+    label: "7:00 – 7:29/km",
+  },
+  {
+    value: "pace-km-7-30-or-slower",
+    label: "≥7:30/km",
   },
 ] as const;
 
@@ -188,10 +208,12 @@ export default function EditReviewDialog({ open, onClose, review, onSaved }: Pro
     toDisplayDistance,
     toBaseDistance,
     distanceUnit,
+    distanceLabel,
     weightUnit,
+    weightLabel,
   } = useUnitPreferences();
 
-  const [rating, setRating] = useState<number>(0);
+  const [rating, setRating] = useState<number>(3);
   const [comment, setComment] = useState<string>("");
   const [fit, setFit] = useState<string>(NONE_OPTION);
   const [cushion, setCushion] = useState<string>(NONE_OPTION);
@@ -199,13 +221,27 @@ export default function EditReviewDialog({ open, onClose, review, onSaved }: Pro
   const [mileage, setMileage] = useState<string>("");
   const [paceRange, setPaceRange] = useState<string>(NONE_OPTION);
   const [weightRange, setWeightRange] = useState<string>(NONE_OPTION);
+  const [retired, setRetired] = useState<boolean>(false);
   const [loading, setLoading] = useState(false);
-
-  const ratingLabel = useMemo(() => (rating ? `${rating}/5` : "0/5"), [rating]);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [pendingClose, setPendingClose] = useState(false);
+  
+  // Store original values to detect changes
+  const [originalValues, setOriginalValues] = useState<{
+    rating: number;
+    comment: string;
+    fit: string;
+    cushion: string;
+    stability: string;
+    mileage: string;
+    paceRange: string;
+    weightRange: string;
+    retired: boolean;
+  } | null>(null);
 
   useEffect(() => {
     if (!review) {
-      setRating(0);
+      setRating(3);
       setComment("");
       setFit(NONE_OPTION);
       setCushion(NONE_OPTION);
@@ -213,33 +249,102 @@ export default function EditReviewDialog({ open, onClose, review, onSaved }: Pro
       setMileage("");
       setPaceRange(NONE_OPTION);
       setWeightRange(NONE_OPTION);
+      setRetired(false);
+      setOriginalValues(null);
       return;
     }
 
-    setRating(review.rating ?? 0);
-    setComment(review.comment ?? "");
-    setFit(review.fit ?? NONE_OPTION);
-    setCushion(review.cushion ?? NONE_OPTION);
-    setStability(review.stability ?? NONE_OPTION);
+    const initialRating = review.rating ?? 3;
+    const initialComment = review.comment ?? "";
+    const initialFit = review.fit ?? NONE_OPTION;
+    const initialCushion = review.cushion ?? NONE_OPTION;
+    const initialStability = review.stability ?? NONE_OPTION;
+    const initialRetired = review.retired ?? false;
 
     // Mileage: display as integer
     const displayMileage = review.mileage != null ? toDisplayDistance(review.mileage) : null;
-    setMileage(
-      displayMileage != null
-        ? Math.round(displayMileage).toString()
-        : "",
-    );
+    const initialMileage = displayMileage != null
+      ? Math.round(displayMileage).toString()
+      : "";
 
     // Pace: use range if available, otherwise NONE
-    setPaceRange(review.paceRange ?? NONE_OPTION);
+    // Handle empty string, null, and undefined
+    let paceRangeValue = NONE_OPTION;
+    if (review.paceRange && typeof review.paceRange === 'string' && review.paceRange.trim() !== "") {
+      paceRangeValue = review.paceRange.trim();
+    }
 
     // Weight: use range if available, otherwise NONE
-    setWeightRange(review.weightRange ?? NONE_OPTION);
+    // Handle empty string, null, and undefined
+    const weightRangeValue = (review.weightRange && typeof review.weightRange === 'string' && review.weightRange.trim() !== "") 
+      ? review.weightRange.trim()
+      : NONE_OPTION;
+
+    // Set current values
+    setRating(initialRating);
+    setComment(initialComment);
+    setFit(initialFit);
+    setCushion(initialCushion);
+    setStability(initialStability);
+    setMileage(initialMileage);
+    setPaceRange(paceRangeValue);
+    setWeightRange(weightRangeValue);
+    setRetired(initialRetired);
+
+    // Store original values for change detection
+    setOriginalValues({
+      rating: initialRating,
+      comment: initialComment,
+      fit: initialFit,
+      cushion: initialCushion,
+      stability: initialStability,
+      mileage: initialMileage,
+      paceRange: paceRangeValue,
+      weightRange: weightRangeValue,
+      retired: initialRetired,
+    });
   }, [
     review,
     toDisplayDistance,
     distanceUnit,
   ]);
+
+  // Check if any fields have been changed
+  function hasUnsavedChanges(): boolean {
+    if (!originalValues) return false;
+
+    return (
+      rating !== originalValues.rating ||
+      comment.trim() !== originalValues.comment.trim() ||
+      fit !== originalValues.fit ||
+      cushion !== originalValues.cushion ||
+      stability !== originalValues.stability ||
+      mileage.trim() !== originalValues.mileage.trim() ||
+      paceRange !== originalValues.paceRange ||
+      weightRange !== originalValues.weightRange ||
+      retired !== originalValues.retired
+    );
+  }
+
+  function handleClose() {
+    if (hasUnsavedChanges() && !showConfirmDialog) {
+      setPendingClose(true);
+      setShowConfirmDialog(true);
+    } else if (!hasUnsavedChanges()) {
+      onClose();
+    }
+  }
+
+  function handleConfirmClose() {
+    setShowConfirmDialog(false);
+    setPendingClose(false);
+    onClose();
+  }
+
+  function handleCancelClose() {
+    setShowConfirmDialog(false);
+    setPendingClose(false);
+  }
 
   async function handleSave() {
     if (!review) return;
@@ -265,6 +370,7 @@ export default function EditReviewDialog({ open, onClose, review, onSaved }: Pro
       mileage: mileageBase ?? (mileage.trim() === "" ? null : undefined),
       paceRange: paceRange === NONE_OPTION ? null : paceRange,
       weightRange: weightRange === NONE_OPTION ? null : weightRange,
+      retired: retired,
     };
 
     setLoading(true);
@@ -287,36 +393,72 @@ export default function EditReviewDialog({ open, onClose, review, onSaved }: Pro
   }
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(isOpen) => {
-        if (!isOpen) onClose();
-      }}
-    >
-      <DialogContent className="sm:max-w-2xl">
+    <>
+      <Dialog
+        open={open}
+        onOpenChange={(isOpen) => {
+          if (!isOpen && !showConfirmDialog) {
+            handleClose();
+          }
+        }}
+      >
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto my-4 sm:my-0">
         <DialogHeader>
-          <DialogTitle>Edit Review</DialogTitle>
-          <DialogDescription>
-            Update the details of your review. Fields left blank will be cleared.
-          </DialogDescription>
+          <div className="mb-6">
+            <span className="tracking-widest text-[#007bff] block mb-2 font-bold">EDIT</span>
+            <DialogTitle 
+              className="text-4xl lg:text-5xl leading-[0.9] mb-4 relative" 
+              style={{ fontFamily: "'Bebas Neue', sans-serif", letterSpacing: '0.02em' }}
+            >
+              REVIEW
+              <div className="absolute -bottom-2 left-0 w-16 h-1 bg-[#007bff]"></div>
+            </DialogTitle>
+          </div>
         </DialogHeader>
 
         <div className="space-y-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-3">
-              <StarRating value={rating} onChange={(val) => setRating(val)} size="lg" />
-              <span className="text-sm text-muted-foreground">{ratingLabel}</span>
+            <div className="flex flex-col gap-3">
+              <label className="block mb-2 tracking-wider text-base">
+                OVERALL RATING *
+              </label>
+              <div className="flex gap-2 mb-3">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setRating(star)}
+                    className="transition-all hover:scale-125 active:scale-95"
+                  >
+                    <Star
+                      className={cn(
+                        "size-6 transition-all duration-200",
+                        star <= rating
+                          ? 'fill-[#007bff] text-[#007bff] drop-shadow-md'
+                          : 'text-neutral-300 hover:text-neutral-400'
+                      )}
+                    />
+                  </button>
+                ))}
+              </div>
+              {rating > 0 && (
+                <p className="tracking-wide text-neutral-600">
+                  {rating} out of 5 stars
+                </p>
+              )}
             </div>
-            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+            <p className="text-xs uppercase tracking-[0.2em] text-gray-600">
               Required fields marked with *
             </p>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label>Fit</Label>
+              <label className="block tracking-wider text-base mb-3">
+                FIT
+              </label>
               <Select value={fit} onValueChange={setFit}>
-                <SelectTrigger>
+                <SelectTrigger className="border-2 border-black h-14 tracking-wider shadow-sm hover:shadow-blue-sm transition-all">
                   <SelectValue placeholder="Select fit" />
                 </SelectTrigger>
                 <SelectContent>
@@ -330,9 +472,11 @@ export default function EditReviewDialog({ open, onClose, review, onSaved }: Pro
             </div>
 
             <div className="space-y-2">
-              <Label>Cushion</Label>
+              <label className="block tracking-wider text-base mb-3">
+                CUSHION
+              </label>
               <Select value={cushion} onValueChange={setCushion}>
-                <SelectTrigger>
+                <SelectTrigger className="border-2 border-black h-14 tracking-wider shadow-sm hover:shadow-blue-sm transition-all">
                   <SelectValue placeholder="Select cushion" />
                 </SelectTrigger>
                 <SelectContent>
@@ -346,9 +490,11 @@ export default function EditReviewDialog({ open, onClose, review, onSaved }: Pro
             </div>
 
             <div className="space-y-2">
-              <Label>Stability</Label>
+              <label className="block tracking-wider text-base mb-3">
+                STABILITY
+              </label>
               <Select value={stability} onValueChange={setStability}>
-                <SelectTrigger>
+                <SelectTrigger className="border-2 border-black h-14 tracking-wider shadow-sm hover:shadow-blue-sm transition-all">
                   <SelectValue placeholder="Select stability" />
                 </SelectTrigger>
                 <SelectContent>
@@ -362,22 +508,30 @@ export default function EditReviewDialog({ open, onClose, review, onSaved }: Pro
             </div>
 
             <div className="space-y-2">
-              <Label>Mileage ({distanceUnit === "kilometers" ? "km" : "mi"})</Label>
+              <label className="block tracking-wider text-base mb-3">
+                MILEAGE ON SHOE ({distanceLabel.toUpperCase()})
+              </label>
               <Input
                 type="number"
                 inputMode="numeric"
                 min={0}
-                step={1}
+                step={0.1}
                 value={mileage}
                 onChange={(e) => setMileage(e.target.value)}
-                placeholder={`Total ${distanceUnit === "kilometers" ? "km" : "mi"}`}
+                placeholder={distanceUnit === "kilometers" ? "Enter total kilometers" : "Enter total miles"}
+                className="border-2 border-black h-14 tracking-wider shadow-sm hover:shadow-blue-sm transition-all placeholder:text-muted-foreground"
               />
             </div>
 
             <div className="space-y-2">
-              <Label>Pace range</Label>
-              <Select value={paceRange} onValueChange={setPaceRange}>
-                <SelectTrigger>
+              <label className="block tracking-wider text-base mb-3">
+                PACE RANGE
+              </label>
+              <Select 
+                value={paceRange} 
+                onValueChange={setPaceRange}
+              >
+                <SelectTrigger className="border-2 border-black h-14 tracking-wider shadow-sm hover:shadow-blue-sm transition-all">
                   <SelectValue placeholder={
                     distanceUnit === "kilometers"
                       ? "Select pace range per km"
@@ -398,10 +552,16 @@ export default function EditReviewDialog({ open, onClose, review, onSaved }: Pro
             </div>
 
             <div className="space-y-2">
-              <Label>Weight range</Label>
-              <Select value={weightRange} onValueChange={setWeightRange}>
-                <SelectTrigger>
-                  <SelectValue placeholder={`Select weight range (${weightUnit})`} />
+              <label className="block tracking-wider text-base mb-3">
+                WEIGHT RANGE
+              </label>
+              <Select 
+                value={weightRange || NONE_OPTION} 
+                onValueChange={setWeightRange}
+                key={`weight-${weightRange}-${weightUnit}`}
+              >
+                <SelectTrigger className="border-2 border-black h-14 tracking-wider shadow-sm hover:shadow-blue-sm transition-all">
+                  <SelectValue placeholder={`Select weight range (${weightLabel})`} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value={NONE_OPTION}>Not set</SelectItem>
@@ -418,20 +578,62 @@ export default function EditReviewDialog({ open, onClose, review, onSaved }: Pro
           </div>
 
           <div className="space-y-2">
-            <Label>
-              Review <span className="text-destructive">*</span>
-            </Label>
+            <label className="block tracking-wider text-base mb-3">
+              SHOE STATUS
+            </label>
+            <div className="flex items-center space-x-3 px-3 border-2 border-black rounded-sm h-14 shadow-sm hover:shadow-blue-sm transition-all">
+              <Checkbox
+                id="retired-edit"
+                checked={retired}
+                onCheckedChange={(checked) => setRetired(checked === true)}
+                className="border-2 border-black data-[state=checked]:bg-[#007bff] data-[state=checked]:border-[#007bff]"
+              />
+              <label
+                htmlFor="retired-edit"
+                className="text-sm tracking-wider cursor-pointer leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex-1"
+              >
+                Shoe has been retired
+              </label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    className="flex-shrink-0 p-1 hover:bg-gray-100 rounded-full transition-colors focus:outline-none"
+                    aria-label="Learn more about retired shoes"
+                  >
+                    <Info className="h-5 w-5 text-gray-500 hover:text-gray-700" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80 p-4" side="top" align="end">
+                  <div className="space-y-2">
+                    <h4 className="font-semibold text-sm">About Retired Shoes</h4>
+                    <p className="text-sm text-gray-600 leading-relaxed">
+                      Check this box if the shoe has been retired due to wear or excessive use. 
+                      If the shoe is no longer in use because you don't like it, please indicate 
+                      that in your review description instead.
+                    </p>
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="block tracking-wider text-base mb-3">
+              REVIEW <span className="text-[#007bff]">*</span>
+            </label>
             <Textarea
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               rows={4}
               placeholder="Share how this shoe performs..."
+              className="border-2 border-black tracking-wider shadow-sm hover:shadow-blue-sm transition-all placeholder:text-muted-foreground"
             />
           </div>
         </div>
 
         <DialogFooter className="pt-4">
-          <Button variant="outline" onClick={onClose} disabled={loading}>
+          <Button variant="outline" onClick={handleClose} disabled={loading}>
             Cancel
           </Button>
           <Button onClick={handleSave} disabled={loading || !rating || !comment.trim()}>
@@ -440,5 +642,15 @@ export default function EditReviewDialog({ open, onClose, review, onSaved }: Pro
         </DialogFooter>
       </DialogContent>
     </Dialog>
+    <ConfirmDialog
+      open={showConfirmDialog}
+      title="Unsaved Changes"
+      description="You have unsaved changes. Are you sure you want to close? Your changes will be lost."
+      onConfirm={handleConfirmClose}
+      onClose={handleCancelClose}
+      confirmLabel="Discard Changes"
+      confirmVariant="destructive"
+    />
+    </>
   );
 }

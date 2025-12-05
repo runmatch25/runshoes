@@ -33,6 +33,8 @@ model User {
   password  String
   weight    Int?
   pace      Float?
+  paceRange String?   // pace range identifier (e.g., "pace-mile-9-31-to-10-59")
+  weightRange String? // weight range identifier (e.g., "weight-lbs-150-170")
   reviews   Review[]
   reviewVotes ReviewVote[]
   createdAt DateTime  @default(now())
@@ -75,7 +77,10 @@ model Review {
   weight     Int?         // legacy - single weight value
   paceRange  String?      // pace range identifier (e.g., "pace-mile-9-31-to-10-59")
   weightRange String?     // weight range identifier (e.g., "weight-lbs-150-170")
+  categories String[]     // shoe categories (e.g., "Daily trainer", "Tempo", "Racing", "Long run", "Trail")
+  retired    Boolean?     @default(false) // shoe has been retired (no longer in use due to wear)
   createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt @default(now())
 }
 
 model ReviewVote {

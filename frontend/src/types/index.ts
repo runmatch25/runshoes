@@ -17,6 +17,10 @@ export interface Review {
   mileage?: number;
   paceMinutes?: number;
   paceSeconds?: number;
+  categories?: string[];
+  retired?: boolean;
+  createdAt?: string | null;
+  updatedAt?: string | null;
   shoe?: Shoe;
   user?: User;
 }

@@ -23,7 +23,7 @@ export class AuthService {
     const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET || 'secret', { expiresIn: '7d' });
     return {
       token,
-      user: { id: user.id, name: user.name, email: user.email, weight: user.weight, pace: user.pace },
+      user: { id: user.id, name: user.name, email: user.email, weight: user.weight, pace: user.pace, paceRange: user.paceRange, weightRange: user.weightRange },
     };
   }
 
@@ -37,7 +37,7 @@ export class AuthService {
     const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET || 'secret', { expiresIn: '7d' });
     return {
       token,
-      user: { id: user.id, name: user.name, email: user.email, weight: user.weight, pace: user.pace },
+      user: { id: user.id, name: user.name, email: user.email, weight: user.weight, pace: user.pace, paceRange: user.paceRange, weightRange: user.weightRange },
     };
   }
 
@@ -54,9 +54,22 @@ export class AuthService {
   const decoded = jwt.verify(token, process.env.JWT_SECRET || "secret") as { userId: number };
   const user = await this.prisma.user.findUnique({
     where: { id: decoded.userId },
-    select: { id: true, name: true, email: true },
+    select: { id: true, name: true, email: true, weight: true, pace: true, paceRange: true, weightRange: true },
   });
   return user;
 }
+
+  async updateUserProfile(token: string, data: { paceRange?: string; weightRange?: string }) {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || "secret") as { userId: number };
+    const user = await this.prisma.user.update({
+      where: { id: decoded.userId },
+      data: {
+        paceRange: data.paceRange !== undefined ? data.paceRange : undefined,
+        weightRange: data.weightRange !== undefined ? data.weightRange : undefined,
+      },
+      select: { id: true, name: true, email: true, weight: true, pace: true, paceRange: true, weightRange: true },
+    });
+    return user;
+  }
 
 }

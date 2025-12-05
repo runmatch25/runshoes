@@ -14,6 +14,7 @@ interface Review {
   rating: number;
   comment: string;
   createdAt?: string | null;
+  updatedAt?: string | null;
   user: { id: number; name: string };
   helpfulCount: number;
   notHelpfulCount: number;
@@ -27,6 +28,8 @@ interface Review {
   weight?: number | null; // legacy
   paceRange?: string | null;
   weightRange?: string | null;
+  categories?: string[] | null;
+  retired?: boolean | null;
 }
 
 interface Shoe {
@@ -174,7 +177,10 @@ export default function ShoeClient({ shoeId }: { shoeId: number }) {
               rating={r.rating}
               comment={r.comment}
               createdAt={r.createdAt}
+              updatedAt={r.updatedAt}
               userName={r.user.name}
+              shoeBrand={shoe?.brand}
+              shoeModel={shoe?.model}
               formattedDate={formatDateISOToMMDDYYYY(r.createdAt)}
               canEdit={user?.id !== undefined && r.user.id === user.id}
               onEdit={() =>
@@ -191,6 +197,7 @@ export default function ShoeClient({ shoeId }: { shoeId: number }) {
                   weight: r.weight ?? null,
                   paceRange: r.paceRange ?? null,
                   weightRange: r.weightRange ?? null,
+                  retired: r.retired ?? null,
                 })
               }
               onDelete={() => openConfirm(r.id)}
@@ -210,6 +217,8 @@ export default function ShoeClient({ shoeId }: { shoeId: number }) {
               weight={r.weight ?? undefined}
               paceRange={r.paceRange ?? undefined}
               weightRange={r.weightRange ?? undefined}
+              categories={r.categories ?? undefined}
+              retired={r.retired ?? undefined}
             />
           ))}
         </div>

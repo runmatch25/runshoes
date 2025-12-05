@@ -23,4 +23,13 @@ export class AuthController {
   async login(@Body() body: { email: string; password: string }) {
     return this.authService.login(body.email, body.password);
   }
+
+  @Post('profile')
+  async updateProfile(
+    @Headers("authorization") authHeader: string,
+    @Body() body: { paceRange?: string; weightRange?: string },
+  ) {
+    const token = authHeader?.replace("Bearer ", "");
+    return this.authService.updateUserProfile(token, body);
+  }
 }

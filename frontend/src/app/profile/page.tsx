@@ -8,14 +8,16 @@ import { formatDateISOToMMDDYYYY } from "@/lib/formatDate";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import ReviewCard from "@/components/ReviewCard";
-import { Pencil, Trash2, ArrowRight } from "lucide-react";
-import Footer from "@/components/Footer";
+import { Pencil, Trash2, ArrowRight, Check, X } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useUnitPreferences } from "@/context/UnitPreferencesContext";
 
 interface Review {
   id: number;
   rating: number;
   comment: string;
   createdAt?: string | null;
+  updatedAt?: string | null;
   shoe: { id: number; brand: string; model: string };
   fit?: "SMALL" | "TRUE_TO_SIZE" | "BIG" | null;
   cushion?: "SOFT" | "BALANCED" | "FIRM" | null;
@@ -26,18 +28,68 @@ interface Review {
   weight?: number | null; // legacy
   paceRange?: string | null;
   weightRange?: string | null;
+  categories?: string[] | null;
+  retired?: boolean | null;
   helpfulCount?: number;
   notHelpfulCount?: number;
   userVote?: number;
   user?: { id: number; name: string };
 }
 
+const paceRangeOptionsImperial = [
+  { value: "pace-mile-faster-than-6-00", label: "<6:00/mile" },
+  { value: "pace-mile-6-00-to-6-59", label: "6:00 – 6:59/mile" },
+  { value: "pace-mile-7-00-to-7-59", label: "7:00 – 7:59/mile" },
+  { value: "pace-mile-8-00-to-8-59", label: "8:00 – 8:59/mile" },
+  { value: "pace-mile-9-00-to-9-59", label: "9:00 – 9:59/mile" },
+  { value: "pace-mile-10-00-to-10-59", label: "10:00 – 10:59/mile" },
+  { value: "pace-mile-11-00-to-11-59", label: "11:00 – 11:59/mile" },
+  { value: "pace-mile-12-00-or-slower", label: "≥12:00/mile" },
+] as const;
+
+const paceRangeOptionsMetric = [
+  { value: "pace-km-faster-than-3-45", label: "<3:45/km" },
+  { value: "pace-km-3-45-to-4-19", label: "3:45 – 4:19/km" },
+  { value: "pace-km-4-20-to-4-59", label: "4:20 – 4:59/km" },
+  { value: "pace-km-5-00-to-5-39", label: "5:00 – 5:39/km" },
+  { value: "pace-km-5-40-to-6-19", label: "5:40 – 6:19/km" },
+  { value: "pace-km-6-20-to-6-59", label: "6:20 – 6:59/km" },
+  { value: "pace-km-7-00-to-7-29", label: "7:00 – 7:29/km" },
+  { value: "pace-km-7-30-or-slower", label: "≥7:30/km" },
+] as const;
+
+const weightRangeOptionsImperial = [
+  { value: "weight-lbs-under-130", label: "<130 lbs" },
+  { value: "weight-lbs-130-150", label: "130 – 150 lbs" },
+  { value: "weight-lbs-150-170", label: "150 – 170 lbs" },
+  { value: "weight-lbs-170-190", label: "170 – 190 lbs" },
+  { value: "weight-lbs-190-210", label: "190 – 210 lbs" },
+  { value: "weight-lbs-over-210", label: ">210 lbs" },
+] as const;
+
+const weightRangeOptionsMetric = [
+  { value: "weight-kg-under-60", label: "<60 kg" },
+  { value: "weight-kg-60-70", label: "60 – 70 kg" },
+  { value: "weight-kg-70-80", label: "70 – 80 kg" },
+  { value: "weight-kg-80-90", label: "80 – 90 kg" },
+  { value: "weight-kg-90-100", label: "90 – 100 kg" },
+  { value: "weight-kg-over-100", label: ">100 kg" },
+] as const;
+
 export default function ProfilePage() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [userName, setUserName] = useState<string>("");
   const [editing, setEditing] = useState<EditableReview | null>(null);
   const [confirmOpen, setConfirmOpen] = useState<{ open: boolean; id?: number }>({ open: false });
+  const [userPaceRange, setUserPaceRange] = useState<string>("");
+  const [userWeightRange, setUserWeightRange] = useState<string>("");
+  const [isEditingPaceRange, setIsEditingPaceRange] = useState(false);
+  const [isEditingWeightRange, setIsEditingWeightRange] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [justSavedPaceRange, setJustSavedPaceRange] = useState(false);
+  const [justSavedWeightRange, setJustSavedWeightRange] = useState(false);
   const router = useRouter();
+  const { distanceUnit, weightUnit } = useUnitPreferences();
 
   const fetchReviews = useCallback(async () => {
     const token = localStorage.getItem("token");
@@ -92,11 +144,47 @@ export default function ProfilePage() {
 
       const data = await res.json();
       setUserName(typeof data?.name === "string" ? data.name : "");
+      setUserPaceRange(data?.paceRange ?? "");
+      setUserWeightRange(data?.weightRange ?? "");
     } catch (error) {
       console.error("Error while fetching user profile:", error);
       setUserName("");
+      setUserPaceRange("");
+      setUserWeightRange("");
     }
   }, []);
+
+  const handleSaveProfile = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    setIsSaving(true);
+    try {
+      const res = await fetch("http://localhost:3001/auth/profile", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          paceRange: userPaceRange || undefined,
+          weightRange: userWeightRange || undefined,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to update profile");
+      }
+
+      setIsEditingPaceRange(false);
+      setIsEditingWeightRange(false);
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      alert("Failed to update profile. Please try again.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -156,7 +244,7 @@ export default function ProfilePage() {
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-8 mt-12">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8 mt-12">
               <div className="border-l-2 border-[#007bff] pl-4 hover:border-l-4 transition-all animate-scale-in">
                 <div className="text-4xl lg:text-5xl mb-2" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>
                   <span className="text-[#007bff]">{reviews.length}</span>
@@ -174,6 +262,250 @@ export default function ProfilePage() {
                   <span className="text-[#007bff]">{new Set(reviews.map(r => r.shoe.id)).size}</span>
                 </div>
                 <p className="text-neutral-600 tracking-wider font-bold">SHOES REVIEWED</p>
+              </div>
+              <div className="border-l-2 border-[#007bff] pl-4 hover:border-l-4 transition-all animate-scale-in animate-delay-300 relative group">
+                {!isEditingPaceRange ? (
+                  <>
+                    <div className="text-2xl lg:text-3xl mb-2" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>
+                      <span className="text-[#007bff]">
+                        {userPaceRange
+                          ? (distanceUnit === "kilometers" ? paceRangeOptionsMetric : paceRangeOptionsImperial).find(
+                              (opt) => opt.value === userPaceRange
+                            )?.label || "Not set"
+                          : "Not set"}
+                      </span>
+                    </div>
+                    <p className="text-neutral-600 tracking-wider font-bold">AVG PACE RANGE</p>
+                    <button
+                      onClick={() => setIsEditingPaceRange(true)}
+                      className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-neutral-100 rounded"
+                      title="Edit pace range"
+                    >
+                      <Pencil className="size-3 text-neutral-500" />
+                    </button>
+                  </>
+                ) : (
+                  <div className="mb-2">
+                    <Select
+                      value={userPaceRange}
+                      open={isEditingPaceRange}
+                      onOpenChange={(open) => {
+                        if (!open) {
+                          // If closing without saving (user clicked outside or cancelled)
+                          if (!isSaving && !justSavedPaceRange) {
+                            setIsEditingPaceRange(false);
+                            fetchUser(); // Reset to original values
+                          } else if (justSavedPaceRange) {
+                            // Just saved, don't reset
+                            setJustSavedPaceRange(false);
+                            setIsEditingPaceRange(false);
+                          }
+                        } else {
+                          setIsEditingPaceRange(true);
+                          setJustSavedPaceRange(false);
+                        }
+                      }}
+                      onValueChange={(value) => {
+                        setUserPaceRange(value); // Update immediately for UI
+                        // Auto-save on selection
+                        const token = localStorage.getItem("token");
+                        if (token) {
+                          setIsSaving(true);
+                          fetch("http://localhost:3001/auth/profile", {
+                            method: "POST",
+                            headers: {
+                              "Content-Type": "application/json",
+                              Authorization: `Bearer ${token}`,
+                            },
+                            body: JSON.stringify({
+                              paceRange: value || undefined,
+                              weightRange: userWeightRange || undefined,
+                            }),
+                          })
+                            .then((res) => {
+                              if (res.ok) {
+                                return res.json();
+                              } else {
+                                throw new Error("Failed to update");
+                              }
+                            })
+                            .then((data) => {
+                              // Update with server response
+                              setUserPaceRange(data.paceRange || "");
+                              setJustSavedPaceRange(true);
+                              setIsEditingPaceRange(false);
+                            })
+                            .catch((error) => {
+                              console.error("Error updating profile:", error);
+                              alert("Failed to update profile. Please try again.");
+                              // Revert to original value on error
+                              fetchUser();
+                            })
+                            .finally(() => setIsSaving(false));
+                        }
+                      }}
+                    >
+                      <SelectTrigger 
+                        className="border-0 shadow-none focus:ring-0 h-auto p-0 w-full text-left justify-start bg-transparent hover:bg-transparent"
+                        style={{ fontFamily: "'Bebas Neue', sans-serif" }}
+                      >
+                        <SelectValue>
+                          <span 
+                            className="text-2xl lg:text-3xl text-[#007bff]"
+                            style={{ fontFamily: "'Bebas Neue', sans-serif" }}
+                          >
+                            {userPaceRange
+                              ? (distanceUnit === "kilometers" ? paceRangeOptionsMetric : paceRangeOptionsImperial).find(
+                                  (opt) => opt.value === userPaceRange
+                                )?.label || "Not set"
+                              : "Not set"}
+                          </span>
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent className="border-2 border-black">
+                        {(distanceUnit === "kilometers" ? paceRangeOptionsMetric : paceRangeOptionsImperial).map(
+                          (option) => (
+                            <SelectItem 
+                              key={option.value} 
+                              value={option.value}
+                              className="tracking-wider text-2xl lg:text-3xl cursor-pointer hover:bg-neutral-100"
+                              style={{ 
+                                fontFamily: "'Bebas Neue', sans-serif", 
+                                color: option.value === userPaceRange ? '#007bff' : 'inherit',
+                                padding: '0.75rem 1.5rem'
+                              }}
+                            >
+                              {option.label}
+                            </SelectItem>
+                          ),
+                        )}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-neutral-600 tracking-wider font-bold mt-2">AVG PACE RANGE</p>
+                  </div>
+                )}
+              </div>
+              <div className="border-l-2 border-[#007bff] pl-4 hover:border-l-4 transition-all animate-scale-in animate-delay-400 relative group">
+                {!isEditingWeightRange ? (
+                  <>
+                    <div className="text-2xl lg:text-3xl mb-2" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>
+                      <span className="text-[#007bff]">
+                        {userWeightRange
+                          ? (weightUnit === "kg" ? weightRangeOptionsMetric : weightRangeOptionsImperial).find(
+                              (opt) => opt.value === userWeightRange
+                            )?.label || "Not set"
+                          : "Not set"}
+                      </span>
+                    </div>
+                    <p className="text-neutral-600 tracking-wider font-bold">WEIGHT RANGE</p>
+                    <button
+                      onClick={() => setIsEditingWeightRange(true)}
+                      className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-neutral-100 rounded"
+                      title="Edit weight range"
+                    >
+                      <Pencil className="size-3 text-neutral-500" />
+                    </button>
+                  </>
+                ) : (
+                  <div className="mb-2">
+                    <Select
+                      value={userWeightRange}
+                      open={isEditingWeightRange}
+                      onOpenChange={(open) => {
+                        if (!open) {
+                          // If closing without saving (user clicked outside or cancelled)
+                          if (!isSaving && !justSavedWeightRange) {
+                            setIsEditingWeightRange(false);
+                            fetchUser(); // Reset to original values
+                          } else if (justSavedWeightRange) {
+                            // Just saved, don't reset
+                            setJustSavedWeightRange(false);
+                            setIsEditingWeightRange(false);
+                          }
+                        } else {
+                          setIsEditingWeightRange(true);
+                          setJustSavedWeightRange(false);
+                        }
+                      }}
+                      onValueChange={(value) => {
+                        setUserWeightRange(value); // Update immediately for UI
+                        // Auto-save on selection
+                        const token = localStorage.getItem("token");
+                        if (token) {
+                          setIsSaving(true);
+                          fetch("http://localhost:3001/auth/profile", {
+                            method: "POST",
+                            headers: {
+                              "Content-Type": "application/json",
+                              Authorization: `Bearer ${token}`,
+                            },
+                            body: JSON.stringify({
+                              paceRange: userPaceRange || undefined,
+                              weightRange: value || undefined,
+                            }),
+                          })
+                            .then((res) => {
+                              if (res.ok) {
+                                return res.json();
+                              } else {
+                                throw new Error("Failed to update");
+                              }
+                            })
+                            .then((data) => {
+                              // Update with server response
+                              setUserWeightRange(data.weightRange || "");
+                              setJustSavedWeightRange(true);
+                              setIsEditingWeightRange(false);
+                            })
+                            .catch((error) => {
+                              console.error("Error updating profile:", error);
+                              alert("Failed to update profile. Please try again.");
+                              // Revert to original value on error
+                              fetchUser();
+                            })
+                            .finally(() => setIsSaving(false));
+                        }
+                      }}
+                    >
+                      <SelectTrigger 
+                        className="border-0 shadow-none focus:ring-0 h-auto p-0 w-full text-left justify-start bg-transparent hover:bg-transparent"
+                        style={{ fontFamily: "'Bebas Neue', sans-serif" }}
+                      >
+                        <SelectValue>
+                          <span 
+                            className="text-2xl lg:text-3xl text-[#007bff]"
+                            style={{ fontFamily: "'Bebas Neue', sans-serif" }}
+                          >
+                            {userWeightRange
+                              ? (weightUnit === "kg" ? weightRangeOptionsMetric : weightRangeOptionsImperial).find(
+                                  (opt) => opt.value === userWeightRange
+                                )?.label || "Not set"
+                              : "Not set"}
+                          </span>
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent className="border-2 border-black">
+                        {(weightUnit === "kg" ? weightRangeOptionsMetric : weightRangeOptionsImperial).map(
+                          (option) => (
+                            <SelectItem 
+                              key={option.value} 
+                              value={option.value}
+                              className="tracking-wider text-2xl lg:text-3xl cursor-pointer hover:bg-neutral-100"
+                              style={{ 
+                                fontFamily: "'Bebas Neue', sans-serif", 
+                                color: option.value === userWeightRange ? '#007bff' : 'inherit',
+                                padding: '0.75rem 1.5rem'
+                              }}
+                            >
+                              {option.label}
+                            </SelectItem>
+                          ),
+                        )}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-neutral-600 tracking-wider font-bold mt-2">WEIGHT RANGE</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -223,6 +555,7 @@ export default function ProfilePage() {
                     rating={review.rating}
                     comment={review.comment}
                     createdAt={review.createdAt}
+                    updatedAt={review.updatedAt}
                     userName={userName || "Runner"}
                     shoeBrand={review.shoe.brand}
                     shoeModel={review.shoe.model}
@@ -242,6 +575,7 @@ export default function ProfilePage() {
                         weight: review.weight ?? null,
                         paceRange: review.paceRange ?? null,
                         weightRange: review.weightRange ?? null,
+                        retired: review.retired ?? null,
                       })
                     }
                     onDelete={() => openConfirm(review.id)}
@@ -260,6 +594,8 @@ export default function ProfilePage() {
                     weight={review.weight ?? undefined}
                     paceRange={review.paceRange ?? undefined}
                     weightRange={review.weightRange ?? undefined}
+                    categories={review.categories ?? undefined}
+                    retired={review.retired ?? undefined}
                   />
                 </div>
               ))}
@@ -267,8 +603,6 @@ export default function ProfilePage() {
           )}
         </section>
       </div>
-
-      <Footer />
 
       <EditReviewDialog 
         open={Boolean(editing)} 

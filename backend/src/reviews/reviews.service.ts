@@ -68,6 +68,8 @@ export class ReviewsService {
       weight?: number;
       paceRange?: string;
       weightRange?: string;
+      categories?: string[];
+      retired?: boolean;
     },
   ) {
     const userId = await this.getUserFromToken(token);
@@ -92,6 +94,8 @@ export class ReviewsService {
         weight: data.weight,
         paceRange: data.paceRange,
         weightRange: data.weightRange,
+        categories: data.categories || [],
+        retired: data.retired ?? false,
       },
       include: {
         user: { select: { id: true, name: true } },
@@ -161,6 +165,8 @@ export class ReviewsService {
       weight?: number;
       paceRange?: string;
       weightRange?: string;
+      categories?: string[];
+      retired?: boolean;
     },
   ) {
     const userId = await this.getUserFromToken(token);
@@ -171,7 +177,7 @@ export class ReviewsService {
 
     const updated = await this.prisma.review.update({
       where: { id: reviewId },
-      data: { ...updates, createdAt: new Date() },
+      data: { ...updates },
       include: {
         user: { select: { id: true, name: true } },
         shoe: true,

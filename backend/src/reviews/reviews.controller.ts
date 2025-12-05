@@ -31,6 +31,8 @@ export class ReviewsController {
       weight?: number;
       paceRange?: string;
       weightRange?: string;
+      categories?: string[];
+      retired?: boolean;
     },
   ) {
     const token = authHeader?.replace('Bearer ', '') ?? '';
@@ -50,6 +52,8 @@ export class ReviewsController {
         weight: body.weight,
         paceRange: body.paceRange,
         weightRange: body.weightRange,
+        categories: body.categories,
+        retired: body.retired,
       },
     );
   }
@@ -84,6 +88,8 @@ export class ReviewsController {
       weight?: number;
       paceRange?: string;
       weightRange?: string;
+      categories?: string[];
+      retired?: boolean;
     },
   ) {
     const token = authHeader?.replace('Bearer ', '') ?? '';
@@ -102,7 +108,7 @@ export class ReviewsController {
     @Headers('authorization') authHeader: string,
     @Body() body: { value: number },
   ) {
-    const token = authHeader?.replace('Bearer ', '');
+    const token = authHeader?.replace('Bearer ', '') ?? '';
     return this.reviewsService.voteReview(token, Number(id), body.value);
   }
 }
