@@ -26,7 +26,7 @@ export class ReviewsService {
     }
   }
 
-  private mapReviewWithVotes<T extends { [key: string]: any; votes?: { value: number; userId: number }[] | null }>(
+  private mapReviewWithVotes<T extends { [key: string]: any; votes?: { value: number; userId: number }[] | null; user?: { name: string | null; nickname?: string | null; useNickname?: boolean } }>(
     review: T,
     currentUserId?: number,
   ): Omit<T, 'votes'> & {
@@ -44,8 +44,19 @@ export class ReviewsService {
 
     const { votes: _votes, ...rest } = review;
 
+    // Compute display name for user in reviews
+    let userWithDisplayName = rest.user;
+    if (userWithDisplayName) {
+      const displayName = userWithDisplayName.useNickname && userWithDisplayName.nickname
+        ? userWithDisplayName.nickname
+        : (userWithDisplayName.name ?? "Anonymous");
+      // For reviews, use displayName as the name field
+      userWithDisplayName = { ...userWithDisplayName, name: displayName };
+    }
+
     return {
       ...rest,
+      user: userWithDisplayName,
       helpfulCount,
       notHelpfulCount,
       userVote,
@@ -98,7 +109,7 @@ export class ReviewsService {
         retired: data.retired ?? false,
       },
       include: {
-        user: { select: { id: true, name: true } },
+        user: { select: { id: true, name: true, nickname: true, useNickname: true } },
         shoe: true,
         votes: { select: { value: true, userId: true } },
       },
@@ -113,7 +124,7 @@ export class ReviewsService {
     const reviews = await this.prisma.review.findMany({
       where: { shoeId },
       include: {
-        user: { select: { id: true, name: true, pace: true, weight: true } },
+        user: { select: { id: true, name: true, nickname: true, useNickname: true, pace: true, weight: true } },
         votes: { select: { value: true, userId: true } },
       },
       orderBy: { createdAt: 'desc' },
@@ -136,10 +147,24 @@ export class ReviewsService {
     return reviews.map((review) => this.mapReviewWithVotes(review, userId));
   }
 
+  async getReviewsByUserId(userId: number, token?: string) {
+    const currentUserId = await this.getOptionalUserFromToken(token);
+    const reviews = await this.prisma.review.findMany({
+      where: { userId },
+      include: {
+        shoe: true,
+        votes: { select: { value: true, userId: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return reviews.map((review) => this.mapReviewWithVotes(review, currentUserId));
+  }
+
   async getAllReviews() {
     const reviews = await this.prisma.review.findMany({
       include: {
-        user: { select: { id: true, name: true } },
+        user: { select: { id: true, name: true, nickname: true, useNickname: true } },
         shoe: { select: { id: true, brand: true, model: true } },
         votes: { select: { value: true, userId: true } },
       },
@@ -179,7 +204,7 @@ export class ReviewsService {
       where: { id: reviewId },
       data: { ...updates },
       include: {
-        user: { select: { id: true, name: true } },
+        user: { select: { id: true, name: true, nickname: true, useNickname: true } },
         shoe: true,
         votes: { select: { value: true, userId: true } },
       },
@@ -242,7 +267,7 @@ export class ReviewsService {
     const updatedReview = await this.prisma.review.findUnique({
       where: { id: reviewId },
       include: {
-        user: { select: { id: true, name: true, pace: true, weight: true } },
+        user: { select: { id: true, name: true, nickname: true, useNickname: true, pace: true, weight: true } },
         votes: { select: { value: true, userId: true } },
       },
     });

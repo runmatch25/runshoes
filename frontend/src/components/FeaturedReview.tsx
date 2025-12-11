@@ -20,29 +20,125 @@ interface FeaturedReviewProps {
   reviews: FeaturedReview[];
 }
 
-// Pace range options mapping
+// Pace range options mapping (with representative values for conversion)
 const paceRangeOptionsImperial = [
-  { value: "pace-mile-slower-than-11", label: ">11:00/mi" },
-  { value: "pace-mile-9-31-to-10-59", label: "9:31 – 10:59/mi" },
-  { value: "pace-mile-8-01-to-9-30", label: "8:01 – 9:30/mi" },
-  { value: "pace-mile-6-31-to-8-00", label: "6:31 – 8:00/mi" },
-  { value: "pace-mile-5-51-to-6-30", label: "5:51 – 6:30/mi" },
-  { value: "pace-mile-faster-than-5-50", label: "<5:50/mi" },
+  { value: "pace-mile-slower-than-11", label: ">11:00/mi", minutes: 11, seconds: 30 },
+  { value: "pace-mile-9-31-to-10-59", label: "9:31 – 10:59/mi", minutes: 10, seconds: 15 },
+  { value: "pace-mile-8-01-to-9-30", label: "8:01 – 9:30/mi", minutes: 8, seconds: 45 },
+  { value: "pace-mile-6-31-to-8-00", label: "6:31 – 8:00/mi", minutes: 7, seconds: 15 },
+  { value: "pace-mile-5-51-to-6-30", label: "5:51 – 6:30/mi", minutes: 6, seconds: 10 },
+  { value: "pace-mile-faster-than-5-50", label: "<5:50/mi", minutes: 5, seconds: 45 },
 ];
 
 const paceRangeOptionsMetric = [
-  { value: "pace-km-slower-than-6-50", label: ">6:50/km" },
-  { value: "pace-km-5-35-to-6-49", label: "5:35 – 6:49/km" },
-  { value: "pace-km-4-40-to-5-34", label: "4:40 – 5:34/km" },
-  { value: "pace-km-3-45-to-4-39", label: "3:45 – 4:39/km" },
-  { value: "pace-km-3-15-to-3-44", label: "3:15 – 3:44/km" },
-  { value: "pace-km-faster-than-3-15", label: "<3:15/km" },
+  { value: "pace-km-slower-than-6-50", label: ">6:50/km", minutes: 7, seconds: 10 },
+  { value: "pace-km-5-35-to-6-49", label: "5:35 – 6:49/km", minutes: 6, seconds: 12 },
+  { value: "pace-km-4-40-to-5-34", label: "4:40 – 5:34/km", minutes: 5, seconds: 7 },
+  { value: "pace-km-3-45-to-4-39", label: "3:45 – 4:39/km", minutes: 4, seconds: 12 },
+  { value: "pace-km-3-15-to-3-44", label: "3:15 – 3:44/km", minutes: 3, seconds: 30 },
+  { value: "pace-km-faster-than-3-15", label: "<3:15/km", minutes: 3, seconds: 7 },
 ];
+
+const KM_PER_MILE = 1.60934;
+
+// Convert pace from one system to another
+const convertPace = (
+  minutes: number,
+  seconds: number,
+  fromMetric: boolean,
+  toMetric: boolean
+): { minutes: number; seconds: number } => {
+  if (fromMetric === toMetric) {
+    return { minutes, seconds };
+  }
+
+  const totalSeconds = minutes * 60 + seconds;
+  let convertedSeconds: number;
+
+  if (fromMetric && !toMetric) {
+    // Convert from km to mile (multiply by KM_PER_MILE)
+    convertedSeconds = totalSeconds * KM_PER_MILE;
+  } else {
+    // Convert from mile to km (divide by KM_PER_MILE)
+    convertedSeconds = totalSeconds / KM_PER_MILE;
+  }
+
+  const convertedMinutes = Math.floor(convertedSeconds / 60);
+  const convertedSecs = Math.round(convertedSeconds % 60);
+  return {
+    minutes: convertedMinutes,
+    seconds: convertedSecs >= 60 ? 0 : convertedSecs,
+  };
+};
+
+// Find the closest matching pace range in target system
+const findMatchingPaceRange = (
+  minutes: number,
+  seconds: number,
+  targetOptions: typeof paceRangeOptionsMetric
+): string | null => {
+  const totalSeconds = minutes * 60 + seconds;
+  let closestRange: (typeof paceRangeOptionsMetric)[number] | null = null;
+  let minDiff = Infinity;
+
+  for (const range of targetOptions) {
+    if (range.minutes === undefined || range.seconds === undefined) continue;
+    const rangeSeconds = range.minutes * 60 + range.seconds;
+    const diff = Math.abs(totalSeconds - rangeSeconds);
+    if (diff < minDiff) {
+      minDiff = diff;
+      closestRange = range;
+    }
+  }
+
+  return closestRange?.value || null;
+};
 
 const getPaceRangeLabel = (paceRange?: string | null, distanceUnit?: string): string | null => {
   if (!paceRange) return null;
-  const options = distanceUnit === "kilometers" ? paceRangeOptionsMetric : paceRangeOptionsImperial;
-  return options.find(opt => opt.value === paceRange)?.label || null;
+
+  const isMetricRange = paceRange.startsWith("pace-km-");
+  const isImperialRange = paceRange.startsWith("pace-mile-");
+  const targetIsMetric = distanceUnit === "kilometers";
+
+  // If the range matches the current system, use it directly
+  if ((isMetricRange && targetIsMetric) || (isImperialRange && !targetIsMetric)) {
+    const options = targetIsMetric ? paceRangeOptionsMetric : paceRangeOptionsImperial;
+    return options.find(opt => opt.value === paceRange)?.label || null;
+  }
+
+  // Need to convert between systems
+  let sourceOptions: typeof paceRangeOptionsMetric;
+  if (isMetricRange) {
+    sourceOptions = paceRangeOptionsMetric;
+  } else if (isImperialRange) {
+    sourceOptions = paceRangeOptionsImperial as typeof paceRangeOptionsMetric;
+  } else {
+    return null;
+  }
+
+  const sourceRange = sourceOptions.find(opt => opt.value === paceRange);
+  if (!sourceRange || sourceRange.minutes === undefined || sourceRange.seconds === undefined) {
+    return null;
+  }
+
+  // Convert the representative pace to the target system
+  const converted = convertPace(
+    sourceRange.minutes,
+    sourceRange.seconds,
+    isMetricRange,
+    targetIsMetric
+  );
+
+  // Find the matching range in the target system
+  const targetOptions = targetIsMetric ? paceRangeOptionsMetric : paceRangeOptionsImperial;
+  const matchingRange = findMatchingPaceRange(converted.minutes, converted.seconds, targetOptions);
+  
+  if (matchingRange) {
+    return targetOptions.find(opt => opt.value === matchingRange)?.label || null;
+  }
+
+  return null;
 };
 
 export default function FeaturedReview({ reviews }: FeaturedReviewProps) {

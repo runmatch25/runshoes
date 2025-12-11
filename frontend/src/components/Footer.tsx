@@ -23,9 +23,9 @@ export default function Footer() {
           <div>
             <h3 className="tracking-wider mb-6">COMMUNITY</h3>
             <div className="space-y-3">
-              <a href="#" className="block text-neutral-400 hover:text-white transition-colors tracking-wide">
-                GUIDELINES
-              </a>
+              <Link href="/guide" className="block text-neutral-400 hover:text-white transition-colors tracking-wide">
+                GUIDE
+              </Link>
               <a href="#" className="block text-neutral-400 hover:text-white transition-colors tracking-wide">
                 FAQ
               </a>

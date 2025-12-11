@@ -17,6 +17,10 @@ export class UsersController {
 
   @Get(':id')
   async findOne(@Param('id') id: string) {
-    return this.usersService.findOne(Number(id));
+    const user = await this.usersService.findOne(Number(id));
+    if (user && user.useNickname && user.nickname) {
+      return { ...user, name: user.nickname };
+    }
+    return user;
   }
 }

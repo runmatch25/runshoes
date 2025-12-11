@@ -8,8 +8,10 @@ import { formatDateISOToMMDDYYYY } from "@/lib/formatDate";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import ReviewCard from "@/components/ReviewCard";
-import { Pencil, Trash2, ArrowRight, Check, X } from "lucide-react";
+import { Pencil, Trash2, ArrowRight, Check, X, Users, TrendingUp, User, Info } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useUnitPreferences } from "@/context/UnitPreferencesContext";
 
 interface Review {
@@ -36,45 +38,304 @@ interface Review {
   user?: { id: number; name: string };
 }
 
+// Range options with representative values for conversion
 const paceRangeOptionsImperial = [
-  { value: "pace-mile-faster-than-6-00", label: "<6:00/mile" },
-  { value: "pace-mile-6-00-to-6-59", label: "6:00 – 6:59/mile" },
-  { value: "pace-mile-7-00-to-7-59", label: "7:00 – 7:59/mile" },
-  { value: "pace-mile-8-00-to-8-59", label: "8:00 – 8:59/mile" },
-  { value: "pace-mile-9-00-to-9-59", label: "9:00 – 9:59/mile" },
-  { value: "pace-mile-10-00-to-10-59", label: "10:00 – 10:59/mile" },
-  { value: "pace-mile-11-00-to-11-59", label: "11:00 – 11:59/mile" },
-  { value: "pace-mile-12-00-or-slower", label: "≥12:00/mile" },
+  { value: "pace-mile-faster-than-6-00", label: "<6:00/mile", minutes: 5, seconds: 59 },
+  { value: "pace-mile-6-00-to-6-59", label: "6:00 – 6:59/mile", minutes: 6, seconds: 30 },
+  { value: "pace-mile-7-00-to-7-59", label: "7:00 – 7:59/mile", minutes: 7, seconds: 30 },
+  { value: "pace-mile-8-00-to-8-59", label: "8:00 – 8:59/mile", minutes: 8, seconds: 30 },
+  { value: "pace-mile-9-00-to-9-59", label: "9:00 – 9:59/mile", minutes: 9, seconds: 30 },
+  { value: "pace-mile-10-00-to-10-59", label: "10:00 – 10:59/mile", minutes: 10, seconds: 30 },
+  { value: "pace-mile-11-00-to-11-59", label: "11:00 – 11:59/mile", minutes: 11, seconds: 30 },
+  { value: "pace-mile-12-00-or-slower", label: "≥12:00/mile", minutes: 12, seconds: 0 },
 ] as const;
 
 const paceRangeOptionsMetric = [
-  { value: "pace-km-faster-than-3-45", label: "<3:45/km" },
-  { value: "pace-km-3-45-to-4-19", label: "3:45 – 4:19/km" },
-  { value: "pace-km-4-20-to-4-59", label: "4:20 – 4:59/km" },
-  { value: "pace-km-5-00-to-5-39", label: "5:00 – 5:39/km" },
-  { value: "pace-km-5-40-to-6-19", label: "5:40 – 6:19/km" },
-  { value: "pace-km-6-20-to-6-59", label: "6:20 – 6:59/km" },
-  { value: "pace-km-7-00-to-7-29", label: "7:00 – 7:29/km" },
-  { value: "pace-km-7-30-or-slower", label: "≥7:30/km" },
+  { value: "pace-km-faster-than-3-45", label: "<3:45/km", minutes: 3, seconds: 44 },
+  { value: "pace-km-3-45-to-4-19", label: "3:45 – 4:19/km", minutes: 4, seconds: 2 },
+  { value: "pace-km-4-20-to-4-59", label: "4:20 – 4:59/km", minutes: 4, seconds: 40 },
+  { value: "pace-km-5-00-to-5-39", label: "5:00 – 5:39/km", minutes: 5, seconds: 20 },
+  { value: "pace-km-5-40-to-6-19", label: "5:40 – 6:19/km", minutes: 6, seconds: 0 },
+  { value: "pace-km-6-20-to-6-59", label: "6:20 – 6:59/km", minutes: 6, seconds: 40 },
+  { value: "pace-km-7-00-to-7-29", label: "7:00 – 7:29/km", minutes: 7, seconds: 15 },
+  { value: "pace-km-7-30-or-slower", label: "≥7:30/km", minutes: 7, seconds: 30 },
 ] as const;
 
 const weightRangeOptionsImperial = [
-  { value: "weight-lbs-under-130", label: "<130 lbs" },
-  { value: "weight-lbs-130-150", label: "130 – 150 lbs" },
-  { value: "weight-lbs-150-170", label: "150 – 170 lbs" },
-  { value: "weight-lbs-170-190", label: "170 – 190 lbs" },
-  { value: "weight-lbs-190-210", label: "190 – 210 lbs" },
-  { value: "weight-lbs-over-210", label: ">210 lbs" },
+  { value: "weight-lbs-under-130", label: "<130 lbs", average: 125 },
+  { value: "weight-lbs-130-150", label: "130 – 150 lbs", average: 140 },
+  { value: "weight-lbs-150-170", label: "150 – 170 lbs", average: 160 },
+  { value: "weight-lbs-170-190", label: "170 – 190 lbs", average: 180 },
+  { value: "weight-lbs-190-210", label: "190 – 210 lbs", average: 200 },
+  { value: "weight-lbs-over-210", label: ">210 lbs", average: 220 },
 ] as const;
 
 const weightRangeOptionsMetric = [
-  { value: "weight-kg-under-60", label: "<60 kg" },
-  { value: "weight-kg-60-70", label: "60 – 70 kg" },
-  { value: "weight-kg-70-80", label: "70 – 80 kg" },
-  { value: "weight-kg-80-90", label: "80 – 90 kg" },
-  { value: "weight-kg-90-100", label: "90 – 100 kg" },
-  { value: "weight-kg-over-100", label: ">100 kg" },
+  { value: "weight-kg-under-60", label: "<60 kg", average: 55 },
+  { value: "weight-kg-60-70", label: "60 – 70 kg", average: 65 },
+  { value: "weight-kg-70-80", label: "70 – 80 kg", average: 75 },
+  { value: "weight-kg-80-90", label: "80 – 90 kg", average: 85 },
+  { value: "weight-kg-90-100", label: "90 – 100 kg", average: 95 },
+  { value: "weight-kg-over-100", label: ">100 kg", average: 110 },
 ] as const;
+
+const KM_PER_MILE = 1.60934;
+const LB_PER_KG = 2.20462;
+
+// Convert pace from one system to another
+const convertPace = (
+  minutes: number,
+  seconds: number,
+  fromMetric: boolean,
+  toMetric: boolean
+): { minutes: number; seconds: number } => {
+  if (fromMetric === toMetric) {
+    return { minutes, seconds };
+  }
+
+  const totalSeconds = minutes * 60 + seconds;
+  let convertedSeconds: number;
+
+  if (fromMetric && !toMetric) {
+    convertedSeconds = totalSeconds * KM_PER_MILE;
+  } else {
+    convertedSeconds = totalSeconds / KM_PER_MILE;
+  }
+
+  const convertedMinutes = Math.floor(convertedSeconds / 60);
+  const convertedSecs = Math.round(convertedSeconds % 60);
+  return {
+    minutes: convertedMinutes,
+    seconds: convertedSecs >= 60 ? 0 : convertedSecs,
+  };
+};
+
+// Find the closest matching pace range in target system
+const findMatchingPaceRange = (
+  minutes: number,
+  seconds: number,
+  targetOptions: typeof paceRangeOptionsMetric
+): string | null => {
+  const totalSeconds = minutes * 60 + seconds;
+  let closestRange: (typeof paceRangeOptionsMetric)[number] | null = null;
+  let minDiff = Infinity;
+
+  for (const range of targetOptions) {
+    if (range.minutes === undefined || range.seconds === undefined) continue;
+    const rangeSeconds = range.minutes * 60 + range.seconds;
+    const diff = Math.abs(totalSeconds - rangeSeconds);
+    if (diff < minDiff) {
+      minDiff = diff;
+      closestRange = range;
+    }
+  }
+
+  return closestRange?.value || null;
+};
+
+// Get pace range label with conversion
+const getPaceRangeLabel = (paceRange?: string | null, distanceUnit?: string): string | null => {
+  if (!paceRange) return null;
+
+  const isMetricRange = paceRange.startsWith("pace-km-");
+  const isImperialRange = paceRange.startsWith("pace-mile-");
+  const targetIsMetric = distanceUnit === "kilometers";
+
+  // If the range matches the current system, use it directly
+  if ((isMetricRange && targetIsMetric) || (isImperialRange && !targetIsMetric)) {
+    const options = targetIsMetric ? paceRangeOptionsMetric : paceRangeOptionsImperial;
+    return options.find(opt => opt.value === paceRange)?.label || null;
+  }
+
+  // Need to convert between systems
+  let sourceOptions: typeof paceRangeOptionsMetric;
+  if (isMetricRange) {
+    sourceOptions = paceRangeOptionsMetric;
+  } else if (isImperialRange) {
+    sourceOptions = paceRangeOptionsImperial as typeof paceRangeOptionsMetric;
+  } else {
+    return null;
+  }
+
+  const sourceRange = sourceOptions.find(opt => opt.value === paceRange);
+  if (!sourceRange || sourceRange.minutes === undefined || sourceRange.seconds === undefined) {
+    return null;
+  }
+
+  // Convert the representative pace to the target system
+  const converted = convertPace(
+    sourceRange.minutes,
+    sourceRange.seconds,
+    isMetricRange,
+    targetIsMetric
+  );
+
+  // Find the matching range in the target system
+  const targetOptions = targetIsMetric ? paceRangeOptionsMetric : paceRangeOptionsImperial;
+  const matchingRange = findMatchingPaceRange(converted.minutes, converted.seconds, targetOptions);
+  
+  if (matchingRange) {
+    return targetOptions.find(opt => opt.value === matchingRange)?.label || null;
+  }
+
+  return null;
+};
+
+// Find the closest matching weight range in target system
+const findMatchingWeightRange = (
+  weight: number,
+  targetOptions: typeof weightRangeOptionsMetric
+): string | null => {
+  let closestRange: (typeof weightRangeOptionsMetric)[number] | null = null;
+  let minDiff = Infinity;
+
+  for (const range of targetOptions) {
+    if (range.average === undefined) continue;
+    const diff = Math.abs(weight - range.average);
+    if (diff < minDiff) {
+      minDiff = diff;
+      closestRange = range;
+    }
+  }
+
+  return closestRange?.value || null;
+};
+
+// Get weight range label with conversion
+const getWeightRangeLabel = (weightRange?: string | null, weightUnit?: string): string | null => {
+  if (!weightRange) return null;
+
+  const isMetricRange = weightRange.startsWith("weight-kg-");
+  const isImperialRange = weightRange.startsWith("weight-lbs-");
+  const targetIsMetric = weightUnit === "kg";
+
+  // If the range matches the current system, use it directly
+  if ((isMetricRange && targetIsMetric) || (isImperialRange && !targetIsMetric)) {
+    const options = targetIsMetric ? weightRangeOptionsMetric : weightRangeOptionsImperial;
+    return options.find(opt => opt.value === weightRange)?.label || null;
+  }
+
+  // Need to convert between systems
+  let sourceOptions: typeof weightRangeOptionsMetric;
+  if (isMetricRange) {
+    sourceOptions = weightRangeOptionsMetric;
+  } else if (isImperialRange) {
+    sourceOptions = weightRangeOptionsImperial as typeof weightRangeOptionsMetric;
+  } else {
+    return null;
+  }
+
+  const sourceRange = sourceOptions.find(opt => opt.value === weightRange);
+  if (!sourceRange || sourceRange.average === undefined) {
+    return null;
+  }
+
+  // Convert the representative weight to the target system
+  let convertedWeight: number;
+  if (isMetricRange && !targetIsMetric) {
+    convertedWeight = sourceRange.average * LB_PER_KG;
+  } else {
+    convertedWeight = sourceRange.average / LB_PER_KG;
+  }
+
+  // Find the matching range in the target system
+  const targetOptions = targetIsMetric ? weightRangeOptionsMetric : weightRangeOptionsImperial;
+  const matchingRange = findMatchingWeightRange(convertedWeight, targetOptions);
+  
+  if (matchingRange) {
+    return targetOptions.find(opt => opt.value === matchingRange)?.label || null;
+  }
+
+  return null;
+};
+
+// Convert pace range to current system (returns range value, not label)
+const convertPaceRangeToCurrentSystem = (
+  paceRange: string,
+  currentDistanceUnit: string
+): string | null => {
+  if (!paceRange || paceRange.trim() === "") return null;
+
+  const isMetricRange = paceRange.startsWith("pace-km-");
+  const isImperialRange = paceRange.startsWith("pace-mile-");
+  const targetIsMetric = currentDistanceUnit === "kilometers";
+
+  // If the range matches the current system, use it directly
+  if ((isMetricRange && targetIsMetric) || (isImperialRange && !targetIsMetric)) {
+    return paceRange;
+  }
+
+  // Need to convert between systems
+  let sourceOptions: typeof paceRangeOptionsMetric;
+  if (isMetricRange) {
+    sourceOptions = paceRangeOptionsMetric;
+  } else if (isImperialRange) {
+    sourceOptions = paceRangeOptionsImperial as typeof paceRangeOptionsMetric;
+  } else {
+    return null;
+  }
+
+  const sourceRange = sourceOptions.find(opt => opt.value === paceRange);
+  if (!sourceRange || sourceRange.minutes === undefined || sourceRange.seconds === undefined) {
+    return null;
+  }
+
+  // Convert the representative pace to the target system
+  const converted = convertPace(
+    sourceRange.minutes,
+    sourceRange.seconds,
+    isMetricRange,
+    targetIsMetric
+  );
+
+  // Find the matching range in the target system
+  const targetOptions = targetIsMetric ? paceRangeOptionsMetric : paceRangeOptionsImperial;
+  return findMatchingPaceRange(converted.minutes, converted.seconds, targetOptions);
+};
+
+// Convert weight range to current system (returns range value, not label)
+const convertWeightRangeToCurrentSystem = (
+  weightRange: string,
+  currentWeightUnit: string
+): string | null => {
+  if (!weightRange || weightRange.trim() === "") return null;
+
+  const isMetricRange = weightRange.startsWith("weight-kg-");
+  const isImperialRange = weightRange.startsWith("weight-lbs-");
+  const targetIsMetric = currentWeightUnit === "kg";
+
+  // If the range matches the current system, use it directly
+  if ((isMetricRange && targetIsMetric) || (isImperialRange && !targetIsMetric)) {
+    return weightRange;
+  }
+
+  // Need to convert between systems
+  let sourceOptions: typeof weightRangeOptionsMetric;
+  if (isMetricRange) {
+    sourceOptions = weightRangeOptionsMetric;
+  } else if (isImperialRange) {
+    sourceOptions = weightRangeOptionsImperial as typeof weightRangeOptionsMetric;
+  } else {
+    return null;
+  }
+
+  const sourceRange = sourceOptions.find(opt => opt.value === weightRange);
+  if (!sourceRange || sourceRange.average === undefined) {
+    return null;
+  }
+
+  // Convert the representative weight to the target system
+  let convertedWeight: number;
+  if (isMetricRange && !targetIsMetric) {
+    convertedWeight = sourceRange.average * LB_PER_KG;
+  } else {
+    convertedWeight = sourceRange.average / LB_PER_KG;
+  }
+
+  // Find the matching range in the target system
+  const targetOptions = targetIsMetric ? weightRangeOptionsMetric : weightRangeOptionsImperial;
+  return findMatchingWeightRange(convertedWeight, targetOptions);
+};
 
 export default function ProfilePage() {
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -83,13 +344,24 @@ export default function ProfilePage() {
   const [confirmOpen, setConfirmOpen] = useState<{ open: boolean; id?: number }>({ open: false });
   const [userPaceRange, setUserPaceRange] = useState<string>("");
   const [userWeightRange, setUserWeightRange] = useState<string>("");
+  const [userNickname, setUserNickname] = useState<string>("");
+  const [useNickname, setUseNickname] = useState<boolean>(false);
+  const [userExperience, setUserExperience] = useState<string>("");
+  const [userPronation, setUserPronation] = useState<string>("");
+  const [memberSince, setMemberSince] = useState<string>("");
   const [isEditingPaceRange, setIsEditingPaceRange] = useState(false);
   const [isEditingWeightRange, setIsEditingWeightRange] = useState(false);
+  const [isEditingNickname, setIsEditingNickname] = useState(false);
+  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [justSavedPaceRange, setJustSavedPaceRange] = useState(false);
   const [justSavedWeightRange, setJustSavedWeightRange] = useState(false);
+  const [justSavedNickname, setJustSavedNickname] = useState(false);
+  // Store original (unconverted) ranges from API
+  const [originalPaceRange, setOriginalPaceRange] = useState<string>("");
+  const [originalWeightRange, setOriginalWeightRange] = useState<string>("");
   const router = useRouter();
-  const { distanceUnit, weightUnit } = useUnitPreferences();
+  const { distanceUnit, weightUnit, formatDistance, formatPace, formatWeight } = useUnitPreferences();
 
   const fetchReviews = useCallback(async () => {
     const token = localStorage.getItem("token");
@@ -144,8 +416,30 @@ export default function ProfilePage() {
 
       const data = await res.json();
       setUserName(typeof data?.name === "string" ? data.name : "");
-      setUserPaceRange(data?.paceRange ?? "");
-      setUserWeightRange(data?.weightRange ?? "");
+      // Store original values from API
+      const apiPaceRange = data?.paceRange ?? "";
+      const apiWeightRange = data?.weightRange ?? "";
+      setOriginalPaceRange(apiPaceRange);
+      setOriginalWeightRange(apiWeightRange);
+      // Convert to current system for display
+      const convertedPaceRange = apiPaceRange 
+        ? (convertPaceRangeToCurrentSystem(apiPaceRange, distanceUnit) || apiPaceRange)
+        : "";
+      const convertedWeightRange = apiWeightRange
+        ? (convertWeightRangeToCurrentSystem(apiWeightRange, weightUnit) || apiWeightRange)
+        : "";
+      setUserPaceRange(convertedPaceRange);
+      setUserWeightRange(convertedWeightRange);
+      setUserNickname(data?.nickname ?? "");
+      setUseNickname(data?.useNickname ?? false);
+      setUserExperience(data?.experience ?? "");
+      setUserPronation(data?.pronation ?? "");
+      if (data?.createdAt) {
+        const date = new Date(data.createdAt);
+        const month = date.toLocaleString('en-US', { month: 'long' });
+        const year = date.getFullYear();
+        setMemberSince(`${month} ${year}`);
+      }
     } catch (error) {
       console.error("Error while fetching user profile:", error);
       setUserName("");
@@ -169,6 +463,10 @@ export default function ProfilePage() {
         body: JSON.stringify({
           paceRange: userPaceRange || undefined,
           weightRange: userWeightRange || undefined,
+          nickname: userNickname || undefined,
+          useNickname: useNickname,
+          experience: userExperience || undefined,
+          pronation: userPronation || undefined,
         }),
       });
 
@@ -176,8 +474,14 @@ export default function ProfilePage() {
         throw new Error("Failed to update profile");
       }
 
-      setIsEditingPaceRange(false);
-      setIsEditingWeightRange(false);
+      const data = await res.json();
+      setUserPaceRange(data.paceRange || "");
+      setUserWeightRange(data.weightRange || "");
+      setUserNickname(data.nickname || "");
+      setUseNickname(data.useNickname ?? false);
+      setUserExperience(data.experience || "");
+      setUserPronation(data.pronation || "");
+      setIsEditProfileOpen(false);
     } catch (error) {
       console.error("Error updating profile:", error);
       alert("Failed to update profile. Please try again.");
@@ -196,6 +500,21 @@ export default function ProfilePage() {
     fetchUser();
     fetchReviews();
   }, [fetchReviews, fetchUser, router]);
+
+  // Convert ranges when unit preferences change
+  useEffect(() => {
+    if (originalPaceRange) {
+      const converted = convertPaceRangeToCurrentSystem(originalPaceRange, distanceUnit);
+      setUserPaceRange(converted || originalPaceRange);
+    }
+  }, [distanceUnit, originalPaceRange]);
+
+  useEffect(() => {
+    if (originalWeightRange) {
+      const converted = convertWeightRangeToCurrentSystem(originalWeightRange, weightUnit);
+      setUserWeightRange(converted || originalWeightRange);
+    }
+  }, [weightUnit, originalWeightRange]);
 
   function openConfirm(id: number) {
     setConfirmOpen({ open: true, id });
@@ -218,294 +537,314 @@ export default function ProfilePage() {
     ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
     : 0;
 
+  const totalMilesLogged = reviews.reduce((sum, r) => {
+    // mileage is stored in kilometers
+    return sum + (r.mileage ?? 0);
+  }, 0);
+
+  const shoesReviewed = new Set(reviews.map(r => r.shoe.id)).size;
+  const distanceLoggedLabel = distanceUnit === "kilometers" ? "Kilometers Logged" : "Miles Logged";
+
   return (
     <div className="min-h-screen bg-white">
       <div className="max-w-[1600px] mx-auto px-6 lg:px-12">
         {/* Header Section */}
-        <section className="py-16 border-b-2 border-neutral-200 relative overflow-hidden">
-          {/* Animated background accent */}
-          <div className="absolute top-0 right-0 w-1/3 h-full opacity-5 pointer-events-none">
-            <div className="w-full h-full gradient-blue-light"></div>
-          </div>
-          
-          <div className="relative z-10">
-            <div className="mb-8 animate-fade-in">
-              <span className="tracking-widest text-[#007bff] block mb-2 font-bold">PROFILE</span>
-              <h1 
-                className="text-5xl lg:text-7xl leading-[0.9] mb-4 relative" 
-                style={{ fontFamily: "'Bebas Neue', sans-serif", letterSpacing: '0.02em' }}
+        <section className="py-12 lg:py-16 border-b-2 border-black relative overflow-hidden bg-[#fafafa]">
+
+          <div className="relative z-10 max-w-7xl mx-auto">
+            <div className="flex flex-col lg:flex-row items-start justify-between gap-8 mb-16">
+              <div className="space-y-6">
+                <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#007bff] border-2 border-black shadow-black-crisp transform -rotate-2 mb-2">
+                  <span className="text-xs font-bold tracking-widest text-white uppercase">Runner Profile</span>
+                </div>
+                <div className="pl-4 border-l-4 border-black">
+                  <div className="relative inline-block mb-4 -ml-5">
+                    <h1
+                      className="text-6xl lg:text-8xl leading-[0.85] text-black bg-[#fafafa] px-1"
+                      style={{ fontFamily: "'Bebas Neue', sans-serif" }}
+                    >
+                      {userName ? userName.toUpperCase() : "RUNNER"}
+                      {useNickname && userNickname ? (
+                        <span className="text-3xl lg:text-4xl ml-3 align-middle text-[#007bff]">
+                          ({userNickname})
+                        </span>
+                      ) : null}
+                    </h1>
+                  </div>
+                  <p className="text-neutral-600 text-lg max-w-2xl font-medium leading-relaxed">
+                    Manage your reviews and track your journey. Your insights help the community run better.
+                  </p>
+                </div>
+              </div>
+
+              <Button
+                onClick={() => setIsEditProfileOpen((prev) => !prev)}
+                className="group relative bg-white text-black border-2 border-black px-8 py-6 rounded-none shadow-black-crisp hover:shadow-black-crisp-lg hover:-translate-y-1 transition-all duration-200"
               >
-                {userName ? userName.toUpperCase() : "RUNNER"}
-                <div className="absolute -bottom-2 left-0 w-24 h-1 bg-[#007bff]"></div>
-              </h1>
-              <p className="text-neutral-600 text-lg max-w-2xl leading-relaxed">
-                Manage your reviews and revisit the shoes you've rated. Your contributions help the running community make better choices.
-              </p>
+                <div className="flex items-center gap-3">
+                  <Pencil className="size-5" />
+                  <span className="text-base font-bold tracking-widest">
+                    {isEditProfileOpen ? "CLOSE EDIT" : "EDIT PROFILE"}
+                  </span>
+                </div>
+              </Button>
             </div>
 
-            {/* Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8 mt-12">
-              <div className="border-l-2 border-[#007bff] pl-4 hover:border-l-4 transition-all animate-scale-in">
-                <div className="text-4xl lg:text-5xl mb-2" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>
-                  <span className="text-[#007bff]">{reviews.length}</span>
+            {isEditProfileOpen && (
+              <div className="bg-white border-2 border-black p-6 lg:p-8 shadow-black-crisp mb-10">
+                {/* Section Header */}
+                <div className="mb-6">
+                  <div className="text-sm text-[#007bff] mb-2 font-medium">Edit Profile</div>
+                  <h2 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">
+                    Update your information
+                  </h2>
+                  <p className="text-gray-600">Keep your profile up to date</p>
                 </div>
-                <p className="text-neutral-600 tracking-wider font-bold">REVIEWS</p>
-              </div>
-              <div className="border-l-2 border-[#007bff] pl-4 hover:border-l-4 transition-all animate-scale-in animate-delay-100">
-                <div className="text-4xl lg:text-5xl mb-2" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>
-                  <span className="text-[#007bff]">{averageRating.toFixed(1)}</span>
-                </div>
-                <p className="text-neutral-600 tracking-wider font-bold">AVG RATING</p>
-              </div>
-              <div className="border-l-2 border-[#007bff] pl-4 hover:border-l-4 transition-all animate-scale-in animate-delay-200">
-                <div className="text-4xl lg:text-5xl mb-2" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>
-                  <span className="text-[#007bff]">{new Set(reviews.map(r => r.shoe.id)).size}</span>
-                </div>
-                <p className="text-neutral-600 tracking-wider font-bold">SHOES REVIEWED</p>
-              </div>
-              <div className="border-l-2 border-[#007bff] pl-4 hover:border-l-4 transition-all animate-scale-in animate-delay-300 relative group">
-                {!isEditingPaceRange ? (
-                  <>
-                    <div className="text-2xl lg:text-3xl mb-2" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>
-                      <span className="text-[#007bff]">
-                        {userPaceRange
-                          ? (distanceUnit === "kilometers" ? paceRangeOptionsMetric : paceRangeOptionsImperial).find(
-                              (opt) => opt.value === userPaceRange
-                            )?.label || "Not set"
-                          : "Not set"}
+
+                <div className="space-y-6">
+                  {/* Nickname at top */}
+                  <div>
+                    <label className="block tracking-wider text-base mb-3">
+                      NICKNAME
+                    </label>
+                    <Input
+                      value={userNickname}
+                      onChange={(e) => setUserNickname(e.target.value)}
+                      placeholder="Enter nickname (optional)"
+                      maxLength={50}
+                      className="border-2 border-black h-14 tracking-wider shadow-sm hover:shadow-blue-sm transition-all"
+                    />
+                    <div className="flex items-center gap-2 mt-3">
+                      <Checkbox
+                        checked={useNickname}
+                        onCheckedChange={(checked) => setUseNickname(checked === true)}
+                        className={`border-2 cursor-pointer ${
+                          useNickname 
+                            ? 'border-[#007bff] bg-[#007bff]' 
+                            : 'border-black bg-white'
+                        }`}
+                      />
+                      <span className={`text-sm tracking-wider ${
+                        useNickname ? 'text-[#007bff] font-semibold' : 'text-neutral-600'
+                      }`}>
+                        Use nickname on reviews (keeps full name private)
                       </span>
                     </div>
-                    <p className="text-neutral-600 tracking-wider font-bold">AVG PACE RANGE</p>
-                    <button
-                      onClick={() => setIsEditingPaceRange(true)}
-                      className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-neutral-100 rounded"
-                      title="Edit pace range"
-                    >
-                      <Pencil className="size-3 text-neutral-500" />
-                    </button>
-                  </>
-                ) : (
-                  <div className="mb-2">
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Top Left: Pace Range */}
+                  <div>
+                    <label className="block tracking-wider text-base mb-3">
+                      PACE RANGE
+                    </label>
                     <Select
                       value={userPaceRange}
-                      open={isEditingPaceRange}
-                      onOpenChange={(open) => {
-                        if (!open) {
-                          // If closing without saving (user clicked outside or cancelled)
-                          if (!isSaving && !justSavedPaceRange) {
-                            setIsEditingPaceRange(false);
-                            fetchUser(); // Reset to original values
-                          } else if (justSavedPaceRange) {
-                            // Just saved, don't reset
-                            setJustSavedPaceRange(false);
-                            setIsEditingPaceRange(false);
-                          }
-                        } else {
-                          setIsEditingPaceRange(true);
-                          setJustSavedPaceRange(false);
-                        }
-                      }}
-                      onValueChange={(value) => {
-                        setUserPaceRange(value); // Update immediately for UI
-                        // Auto-save on selection
-                        const token = localStorage.getItem("token");
-                        if (token) {
-                          setIsSaving(true);
-                          fetch("http://localhost:3001/auth/profile", {
-                            method: "POST",
-                            headers: {
-                              "Content-Type": "application/json",
-                              Authorization: `Bearer ${token}`,
-                            },
-                            body: JSON.stringify({
-                              paceRange: value || undefined,
-                              weightRange: userWeightRange || undefined,
-                            }),
-                          })
-                            .then((res) => {
-                              if (res.ok) {
-                                return res.json();
-                              } else {
-                                throw new Error("Failed to update");
-                              }
-                            })
-                            .then((data) => {
-                              // Update with server response
-                              setUserPaceRange(data.paceRange || "");
-                              setJustSavedPaceRange(true);
-                              setIsEditingPaceRange(false);
-                            })
-                            .catch((error) => {
-                              console.error("Error updating profile:", error);
-                              alert("Failed to update profile. Please try again.");
-                              // Revert to original value on error
-                              fetchUser();
-                            })
-                            .finally(() => setIsSaving(false));
-                        }
-                      }}
+                      onValueChange={(value) => setUserPaceRange(value)}
                     >
-                      <SelectTrigger 
-                        className="border-0 shadow-none focus:ring-0 h-auto p-0 w-full text-left justify-start bg-transparent hover:bg-transparent"
-                        style={{ fontFamily: "'Bebas Neue', sans-serif" }}
-                      >
-                        <SelectValue>
-                          <span 
-                            className="text-2xl lg:text-3xl text-[#007bff]"
-                            style={{ fontFamily: "'Bebas Neue', sans-serif" }}
-                          >
-                            {userPaceRange
-                              ? (distanceUnit === "kilometers" ? paceRangeOptionsMetric : paceRangeOptionsImperial).find(
-                                  (opt) => opt.value === userPaceRange
-                                )?.label || "Not set"
-                              : "Not set"}
-                          </span>
-                        </SelectValue>
+                      <SelectTrigger className="border-2 border-black h-14 tracking-wider shadow-sm hover:shadow-blue-sm transition-all">
+                        <SelectValue placeholder="Select pace range" />
                       </SelectTrigger>
-                      <SelectContent className="border-2 border-black">
+                      <SelectContent>
                         {(distanceUnit === "kilometers" ? paceRangeOptionsMetric : paceRangeOptionsImperial).map(
                           (option) => (
-                            <SelectItem 
-                              key={option.value} 
-                              value={option.value}
-                              className="tracking-wider text-2xl lg:text-3xl cursor-pointer hover:bg-neutral-100"
-                              style={{ 
-                                fontFamily: "'Bebas Neue', sans-serif", 
-                                color: option.value === userPaceRange ? '#007bff' : 'inherit',
-                                padding: '0.75rem 1.5rem'
-                              }}
-                            >
+                            <SelectItem key={option.value} value={option.value}>
                               {option.label}
                             </SelectItem>
                           ),
                         )}
                       </SelectContent>
                     </Select>
-                    <p className="text-neutral-600 tracking-wider font-bold mt-2">AVG PACE RANGE</p>
                   </div>
-                )}
-              </div>
-              <div className="border-l-2 border-[#007bff] pl-4 hover:border-l-4 transition-all animate-scale-in animate-delay-400 relative group">
-                {!isEditingWeightRange ? (
-                  <>
-                    <div className="text-2xl lg:text-3xl mb-2" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>
-                      <span className="text-[#007bff]">
-                        {userWeightRange
-                          ? (weightUnit === "kg" ? weightRangeOptionsMetric : weightRangeOptionsImperial).find(
-                              (opt) => opt.value === userWeightRange
-                            )?.label || "Not set"
-                          : "Not set"}
-                      </span>
-                    </div>
-                    <p className="text-neutral-600 tracking-wider font-bold">WEIGHT RANGE</p>
-                    <button
-                      onClick={() => setIsEditingWeightRange(true)}
-                      className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-neutral-100 rounded"
-                      title="Edit weight range"
+
+                  {/* Top Right: Experience */}
+                  <div>
+                    <label className="block tracking-wider text-base mb-3">
+                      EXPERIENCE
+                    </label>
+                    <Select
+                      value={userExperience}
+                      onValueChange={(value) => setUserExperience(value)}
                     >
-                      <Pencil className="size-3 text-neutral-500" />
-                    </button>
-                  </>
-                ) : (
-                  <div className="mb-2">
+                      <SelectTrigger className="border-2 border-black h-14 tracking-wider shadow-sm hover:shadow-blue-sm transition-all">
+                        <SelectValue placeholder="Select experience level" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="BEGINNER">Beginner</SelectItem>
+                        <SelectItem value="INTERMEDIATE">Intermediate</SelectItem>
+                        <SelectItem value="ADVANCED">Advanced</SelectItem>
+                        <SelectItem value="ELITE">Elite</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Bottom Left: Weight Range */}
+                  <div>
+                    <label className="block tracking-wider text-base mb-3">
+                      WEIGHT RANGE
+                    </label>
                     <Select
                       value={userWeightRange}
-                      open={isEditingWeightRange}
-                      onOpenChange={(open) => {
-                        if (!open) {
-                          // If closing without saving (user clicked outside or cancelled)
-                          if (!isSaving && !justSavedWeightRange) {
-                            setIsEditingWeightRange(false);
-                            fetchUser(); // Reset to original values
-                          } else if (justSavedWeightRange) {
-                            // Just saved, don't reset
-                            setJustSavedWeightRange(false);
-                            setIsEditingWeightRange(false);
-                          }
-                        } else {
-                          setIsEditingWeightRange(true);
-                          setJustSavedWeightRange(false);
-                        }
-                      }}
-                      onValueChange={(value) => {
-                        setUserWeightRange(value); // Update immediately for UI
-                        // Auto-save on selection
-                        const token = localStorage.getItem("token");
-                        if (token) {
-                          setIsSaving(true);
-                          fetch("http://localhost:3001/auth/profile", {
-                            method: "POST",
-                            headers: {
-                              "Content-Type": "application/json",
-                              Authorization: `Bearer ${token}`,
-                            },
-                            body: JSON.stringify({
-                              paceRange: userPaceRange || undefined,
-                              weightRange: value || undefined,
-                            }),
-                          })
-                            .then((res) => {
-                              if (res.ok) {
-                                return res.json();
-                              } else {
-                                throw new Error("Failed to update");
-                              }
-                            })
-                            .then((data) => {
-                              // Update with server response
-                              setUserWeightRange(data.weightRange || "");
-                              setJustSavedWeightRange(true);
-                              setIsEditingWeightRange(false);
-                            })
-                            .catch((error) => {
-                              console.error("Error updating profile:", error);
-                              alert("Failed to update profile. Please try again.");
-                              // Revert to original value on error
-                              fetchUser();
-                            })
-                            .finally(() => setIsSaving(false));
-                        }
-                      }}
+                      onValueChange={(value) => setUserWeightRange(value)}
                     >
-                      <SelectTrigger 
-                        className="border-0 shadow-none focus:ring-0 h-auto p-0 w-full text-left justify-start bg-transparent hover:bg-transparent"
-                        style={{ fontFamily: "'Bebas Neue', sans-serif" }}
-                      >
-                        <SelectValue>
-                          <span 
-                            className="text-2xl lg:text-3xl text-[#007bff]"
-                            style={{ fontFamily: "'Bebas Neue', sans-serif" }}
-                          >
-                            {userWeightRange
-                              ? (weightUnit === "kg" ? weightRangeOptionsMetric : weightRangeOptionsImperial).find(
-                                  (opt) => opt.value === userWeightRange
-                                )?.label || "Not set"
-                              : "Not set"}
-                          </span>
-                        </SelectValue>
+                      <SelectTrigger className="border-2 border-black h-14 tracking-wider shadow-sm hover:shadow-blue-sm transition-all">
+                        <SelectValue placeholder="Select weight range" />
                       </SelectTrigger>
-                      <SelectContent className="border-2 border-black">
+                      <SelectContent>
                         {(weightUnit === "kg" ? weightRangeOptionsMetric : weightRangeOptionsImperial).map(
                           (option) => (
-                            <SelectItem 
-                              key={option.value} 
-                              value={option.value}
-                              className="tracking-wider text-2xl lg:text-3xl cursor-pointer hover:bg-neutral-100"
-                              style={{ 
-                                fontFamily: "'Bebas Neue', sans-serif", 
-                                color: option.value === userWeightRange ? '#007bff' : 'inherit',
-                                padding: '0.75rem 1.5rem'
-                              }}
-                            >
+                            <SelectItem key={option.value} value={option.value}>
                               {option.label}
                             </SelectItem>
                           ),
                         )}
                       </SelectContent>
                     </Select>
-                    <p className="text-neutral-600 tracking-wider font-bold mt-2">WEIGHT RANGE</p>
                   </div>
-                )}
+
+                  {/* Bottom Right: Pronation */}
+                  <div>
+                    <div className="flex items-center gap-2 mb-3">
+                      <label className="block tracking-wider text-base">
+                        PRONATION
+                      </label>
+                      <Link 
+                        href="/guide#pronation" 
+                        className="text-[#007bff] hover:text-[#0056b3] transition-colors"
+                        title="Learn more about pronation"
+                      >
+                        <Info className="size-4" />
+                      </Link>
+                    </div>
+                    <Select
+                      value={userPronation}
+                      onValueChange={(value) => setUserPronation(value)}
+                    >
+                      <SelectTrigger className="border-2 border-black h-14 tracking-wider shadow-sm hover:shadow-blue-sm transition-all">
+                        <SelectValue placeholder="Select pronation type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="NEUTRAL">Neutral</SelectItem>
+                        <SelectItem value="OVERPRONATION">Overpronation</SelectItem>
+                        <SelectItem value="SUPINATION">Supination</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-end gap-3 mt-8 pt-6 border-t-2 border-neutral-200">
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      fetchUser();
+                      setIsEditProfileOpen(false);
+                    }}
+                    className="tracking-wider rounded-none border-2 border-black hover:bg-neutral-50"
+                  >
+                    CANCEL
+                  </Button>
+                  <Button
+                    onClick={handleSaveProfile}
+                    disabled={isSaving}
+                    className="bg-black text-white hover:bg-neutral-800 tracking-wider rounded-none border-2 border-black shadow-sm hover:shadow-blue-sm transition-all"
+                  >
+                    {isSaving ? "SAVING..." : "SAVE CHANGES"}
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Three Cards Layout - Neo-Brutalist Style */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* Community Stats Card */}
+              <div className="bg-white border-2 border-black p-8 shadow-black-crisp hover:shadow-black-crisp-lg transition-all duration-200 group">
+                <div className="flex items-center justify-between mb-8">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-[#007bff] p-2 border-2 border-black text-white">
+                      <Users className="size-6" />
+                    </div>
+                    <h3 className="text-xl font-bold tracking-widest uppercase">Community Stats</h3>
+                  </div>
+                </div>
+                
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between border-b-2 border-neutral-100 pb-2">
+                    <span className="text-sm font-bold text-neutral-500 tracking-widest uppercase">Reviews</span>
+                    <span className="text-3xl font-black text-black group-hover:text-[#007bff] transition-colors">{reviews.length}</span>
+                  </div>
+                  <div className="flex items-center justify-between border-b-2 border-neutral-100 pb-2">
+                    <span className="text-sm font-bold text-neutral-500 tracking-widest uppercase">Avg Rating</span>
+                    <span className="text-3xl font-black text-black group-hover:text-[#007bff] transition-colors">{averageRating.toFixed(1)}</span>
+                  </div>
+                  <div className="flex items-center justify-between border-b-2 border-neutral-100 pb-2">
+                    <span className="text-sm font-bold text-neutral-500 tracking-widest uppercase">Shoes</span>
+                    <span className="text-3xl font-black text-black group-hover:text-[#007bff] transition-colors">{shoesReviewed}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Performance Card */}
+              <div className="bg-white border-2 border-black p-8 shadow-black-crisp hover:shadow-black-crisp-lg transition-all duration-200 group">
+                <div className="flex items-center gap-3 mb-8">
+                  <div className="bg-black p-2 border-2 border-black text-white">
+                    <TrendingUp className="size-6" />
+                  </div>
+                  <h3 className="text-xl font-bold tracking-widest uppercase">Performance</h3>
+                </div>
+
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between border-b-2 border-neutral-100 pb-2">
+                    <span className="text-sm font-bold text-neutral-500 tracking-widest uppercase">{distanceLoggedLabel}</span>
+                    <span className="text-2xl font-black text-black group-hover:text-[#007bff] transition-colors">{formatDistance(totalMilesLogged, 0) || (distanceUnit === "kilometers" ? "0 km" : "0 mi")}</span>
+                  </div>
+                  <div className="flex items-center justify-between border-b-2 border-neutral-100 pb-2">
+                    <span className="text-sm font-bold text-neutral-500 tracking-widest uppercase">Pace Range</span>
+                    <span className="text-2xl font-black text-black group-hover:text-[#007bff] transition-colors">
+                      {getPaceRangeLabel(userPaceRange, distanceUnit) || "—"}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between border-b-2 border-neutral-100 pb-2">
+                    <span className="text-sm font-bold text-neutral-500 tracking-widest uppercase">Weight</span>
+                    <span className="text-2xl font-black text-black group-hover:text-[#007bff] transition-colors">
+                      {getWeightRangeLabel(userWeightRange, weightUnit) || "—"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Runner Info Card */}
+              <div className="bg-white border-2 border-black p-8 shadow-black-crisp hover:shadow-black-crisp-lg transition-all duration-200 group">
+                <div className="flex items-center gap-3 mb-8">
+                  <div className="bg-white p-2 border-2 border-black text-black">
+                    <User className="size-6" />
+                  </div>
+                  <h3 className="text-xl font-bold tracking-widest uppercase">Runner Info</h3>
+                </div>
+
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between border-b-2 border-neutral-100 pb-2">
+                    <span className="text-sm font-bold text-neutral-500 tracking-widest uppercase">Joined</span>
+                    <span className="text-xl font-black text-black group-hover:text-[#007bff] transition-colors text-right">{memberSince || "—"}</span>
+                  </div>
+                  <div className="flex items-center justify-between border-b-2 border-neutral-100 pb-2">
+                    <span className="text-sm font-bold text-neutral-500 tracking-widest uppercase">Experience</span>
+                    <span className="text-xl font-black text-black group-hover:text-[#007bff] transition-colors text-right">
+                      {userExperience 
+                        ? userExperience.charAt(0) + userExperience.slice(1).toLowerCase()
+                        : "—"}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between border-b-2 border-neutral-100 pb-2">
+                    <span className="text-sm font-bold text-neutral-500 tracking-widest uppercase">Pronation</span>
+                    <span className="text-xl font-black text-black group-hover:text-[#007bff] transition-colors text-right">
+                      {userPronation 
+                        ? userPronation.charAt(0) + userPronation.slice(1).toLowerCase()
+                        : "—"}
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

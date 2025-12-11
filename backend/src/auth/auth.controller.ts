@@ -14,7 +14,7 @@ export class AuthController {
 
   @Post('register')
   async register(
-    @Body() body: { email: string; password: string; name: string; weight?: number; pace?: number },
+    @Body() body: { email: string; password: string; name?: string; weight?: number; pace?: number },
   ) {
     return this.authService.register(body.email, body.password, body.name, body.weight, body.pace);
   }
@@ -27,9 +27,14 @@ export class AuthController {
   @Post('profile')
   async updateProfile(
     @Headers("authorization") authHeader: string,
-    @Body() body: { paceRange?: string; weightRange?: string },
+    @Body() body: { name?: string; paceRange?: string; weightRange?: string; nickname?: string; useNickname?: boolean; experience?: string; pronation?: string; onboardingCompleted?: boolean },
   ) {
     const token = authHeader?.replace("Bearer ", "");
     return this.authService.updateUserProfile(token, body);
+  }
+
+  @Post('oauth')
+  async oauthLogin(@Body() body: { email: string; name: string }) {
+    return this.authService.oauthLogin(body.email, body.name);
   }
 }

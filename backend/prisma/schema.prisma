@@ -28,13 +28,18 @@ enum Stability {
 
 model User {
   id        Int       @id @default(autoincrement())
-  name      String
+  name      String?
   email     String    @unique
   password  String
   weight    Int?
   pace      Float?
   paceRange String?   // pace range identifier (e.g., "pace-mile-9-31-to-10-59")
   weightRange String? // weight range identifier (e.g., "weight-lbs-150-170")
+  nickname  String?  // optional nickname for display on reviews
+  useNickname Boolean @default(false) // whether to use nickname instead of real name on reviews
+  experience String? // BEGINNER, INTERMEDIATE, ADVANCED, ELITE
+  pronation String? // NEUTRAL, OVERPRONATION, UNDERPRONATION
+  onboardingCompleted Boolean @default(false)
   reviews   Review[]
   reviewVotes ReviewVote[]
   createdAt DateTime  @default(now())

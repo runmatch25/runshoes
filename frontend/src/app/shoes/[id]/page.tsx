@@ -416,6 +416,7 @@ export default function ShoePage() {
                     createdAt={review.createdAt}
                     updatedAt={review.updatedAt}
                     userName={review.user.name}
+                    userId={review.user.id}
                     shoeBrand={shoe?.brand}
                     shoeModel={shoe?.model}
                     formattedDate={formatDateISOToMMDDYYYY(review.createdAt)}

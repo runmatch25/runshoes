@@ -70,6 +70,12 @@ export class ReviewsController {
     return this.reviewsService.getUserReviews(token);
   }
 
+  @Get('user/:userId')
+  async getReviewsByUser(@Param('userId') userId: string, @Headers('authorization') authHeader?: string) {
+    const token = authHeader?.replace('Bearer ', '') ?? '';
+    return this.reviewsService.getReviewsByUserId(Number(userId), token);
+  }
+
   @Patch(':id')
   async updateReview(
     @Param('id') id: string,

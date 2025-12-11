@@ -79,129 +79,208 @@ const stabilityOptions = [
   { value: "HIGH_SUPPORT", label: "High support" },
 ] as const;
 
+// Range options with representative values for conversion
 const paceRangeOptionsImperial = [
-  {
-    value: "pace-mile-faster-than-6-00",
-    label: "<6:00/mile",
-  },
-  {
-    value: "pace-mile-6-00-to-6-59",
-    label: "6:00 – 6:59/mile",
-  },
-  {
-    value: "pace-mile-7-00-to-7-59",
-    label: "7:00 – 7:59/mile",
-  },
-  {
-    value: "pace-mile-8-00-to-8-59",
-    label: "8:00 – 8:59/mile",
-  },
-  {
-    value: "pace-mile-9-00-to-9-59",
-    label: "9:00 – 9:59/mile",
-  },
-  {
-    value: "pace-mile-10-00-to-10-59",
-    label: "10:00 – 10:59/mile",
-  },
-  {
-    value: "pace-mile-11-00-to-11-59",
-    label: "11:00 – 11:59/mile",
-  },
-  {
-    value: "pace-mile-12-00-or-slower",
-    label: "≥12:00/mile",
-  },
+  { value: "pace-mile-faster-than-6-00", label: "<6:00/mile", minutes: 5, seconds: 59 },
+  { value: "pace-mile-6-00-to-6-59", label: "6:00 – 6:59/mile", minutes: 6, seconds: 30 },
+  { value: "pace-mile-7-00-to-7-59", label: "7:00 – 7:59/mile", minutes: 7, seconds: 30 },
+  { value: "pace-mile-8-00-to-8-59", label: "8:00 – 8:59/mile", minutes: 8, seconds: 30 },
+  { value: "pace-mile-9-00-to-9-59", label: "9:00 – 9:59/mile", minutes: 9, seconds: 30 },
+  { value: "pace-mile-10-00-to-10-59", label: "10:00 – 10:59/mile", minutes: 10, seconds: 30 },
+  { value: "pace-mile-11-00-to-11-59", label: "11:00 – 11:59/mile", minutes: 11, seconds: 30 },
+  { value: "pace-mile-12-00-or-slower", label: "≥12:00/mile", minutes: 12, seconds: 0 },
 ] as const;
 
 const paceRangeOptionsMetric = [
-  {
-    value: "pace-km-faster-than-3-45",
-    label: "<3:45/km",
-  },
-  {
-    value: "pace-km-3-45-to-4-19",
-    label: "3:45 – 4:19/km",
-  },
-  {
-    value: "pace-km-4-20-to-4-59",
-    label: "4:20 – 4:59/km",
-  },
-  {
-    value: "pace-km-5-00-to-5-39",
-    label: "5:00 – 5:39/km",
-  },
-  {
-    value: "pace-km-5-40-to-6-19",
-    label: "5:40 – 6:19/km",
-  },
-  {
-    value: "pace-km-6-20-to-6-59",
-    label: "6:20 – 6:59/km",
-  },
-  {
-    value: "pace-km-7-00-to-7-29",
-    label: "7:00 – 7:29/km",
-  },
-  {
-    value: "pace-km-7-30-or-slower",
-    label: "≥7:30/km",
-  },
+  { value: "pace-km-faster-than-3-45", label: "<3:45/km", minutes: 3, seconds: 44 },
+  { value: "pace-km-3-45-to-4-19", label: "3:45 – 4:19/km", minutes: 4, seconds: 2 },
+  { value: "pace-km-4-20-to-4-59", label: "4:20 – 4:59/km", minutes: 4, seconds: 40 },
+  { value: "pace-km-5-00-to-5-39", label: "5:00 – 5:39/km", minutes: 5, seconds: 20 },
+  { value: "pace-km-5-40-to-6-19", label: "5:40 – 6:19/km", minutes: 6, seconds: 0 },
+  { value: "pace-km-6-20-to-6-59", label: "6:20 – 6:59/km", minutes: 6, seconds: 40 },
+  { value: "pace-km-7-00-to-7-29", label: "7:00 – 7:29/km", minutes: 7, seconds: 15 },
+  { value: "pace-km-7-30-or-slower", label: "≥7:30/km", minutes: 7, seconds: 30 },
 ] as const;
 
 const weightRangeOptionsImperial = [
-  {
-    value: "weight-lbs-under-130",
-    label: "<130 lbs",
-  },
-  {
-    value: "weight-lbs-130-150",
-    label: "130 – 150 lbs",
-  },
-  {
-    value: "weight-lbs-150-170",
-    label: "150 – 170 lbs",
-  },
-  {
-    value: "weight-lbs-170-190",
-    label: "170 – 190 lbs",
-  },
-  {
-    value: "weight-lbs-190-210",
-    label: "190 – 210 lbs",
-  },
-  {
-    value: "weight-lbs-over-210",
-    label: ">210 lbs",
-  },
+  { value: "weight-lbs-under-130", label: "<130 lbs", average: 125 },
+  { value: "weight-lbs-130-150", label: "130 – 150 lbs", average: 140 },
+  { value: "weight-lbs-150-170", label: "150 – 170 lbs", average: 160 },
+  { value: "weight-lbs-170-190", label: "170 – 190 lbs", average: 180 },
+  { value: "weight-lbs-190-210", label: "190 – 210 lbs", average: 200 },
+  { value: "weight-lbs-over-210", label: ">210 lbs", average: 220 },
 ] as const;
 
 const weightRangeOptionsMetric = [
-  {
-    value: "weight-kg-under-60",
-    label: "<60 kg",
-  },
-  {
-    value: "weight-kg-60-70",
-    label: "60 – 70 kg",
-  },
-  {
-    value: "weight-kg-70-80",
-    label: "70 – 80 kg",
-  },
-  {
-    value: "weight-kg-80-90",
-    label: "80 – 90 kg",
-  },
-  {
-    value: "weight-kg-90-100",
-    label: "90 – 100 kg",
-  },
-  {
-    value: "weight-kg-over-100",
-    label: ">100 kg",
-  },
+  { value: "weight-kg-under-60", label: "<60 kg", average: 55 },
+  { value: "weight-kg-60-70", label: "60 – 70 kg", average: 65 },
+  { value: "weight-kg-70-80", label: "70 – 80 kg", average: 75 },
+  { value: "weight-kg-80-90", label: "80 – 90 kg", average: 85 },
+  { value: "weight-kg-90-100", label: "90 – 100 kg", average: 95 },
+  { value: "weight-kg-over-100", label: ">100 kg", average: 110 },
 ] as const;
+
+const KM_PER_MILE = 1.60934;
+const LB_PER_KG = 2.20462;
+
+// Convert pace from one system to another
+const convertPace = (
+  minutes: number,
+  seconds: number,
+  fromMetric: boolean,
+  toMetric: boolean
+): { minutes: number; seconds: number } => {
+  if (fromMetric === toMetric) {
+    return { minutes, seconds };
+  }
+
+  const totalSeconds = minutes * 60 + seconds;
+  let convertedSeconds: number;
+
+  if (fromMetric && !toMetric) {
+    convertedSeconds = totalSeconds * KM_PER_MILE;
+  } else {
+    convertedSeconds = totalSeconds / KM_PER_MILE;
+  }
+
+  const convertedMinutes = Math.floor(convertedSeconds / 60);
+  const convertedSecs = Math.round(convertedSeconds % 60);
+  return {
+    minutes: convertedMinutes,
+    seconds: convertedSecs >= 60 ? 0 : convertedSecs,
+  };
+};
+
+// Find the closest matching pace range in target system
+const findMatchingPaceRange = (
+  minutes: number,
+  seconds: number,
+  targetOptions: typeof paceRangeOptionsMetric
+): string | null => {
+  const totalSeconds = minutes * 60 + seconds;
+  let closestRange: (typeof paceRangeOptionsMetric)[number] | null = null;
+  let minDiff = Infinity;
+
+  for (const range of targetOptions) {
+    if (range.minutes === undefined || range.seconds === undefined) continue;
+    const rangeSeconds = range.minutes * 60 + range.seconds;
+    const diff = Math.abs(totalSeconds - rangeSeconds);
+    if (diff < minDiff) {
+      minDiff = diff;
+      closestRange = range;
+    }
+  }
+
+  return closestRange?.value || null;
+};
+
+// Convert pace range to current system
+const convertPaceRangeToCurrentSystem = (
+  paceRange: string,
+  currentDistanceUnit: string
+): string | null => {
+  if (!paceRange || paceRange.trim() === "") return null;
+
+  const isMetricRange = paceRange.startsWith("pace-km-");
+  const isImperialRange = paceRange.startsWith("pace-mile-");
+  const targetIsMetric = currentDistanceUnit === "kilometers";
+
+  // If the range matches the current system, use it directly
+  if ((isMetricRange && targetIsMetric) || (isImperialRange && !targetIsMetric)) {
+    return paceRange;
+  }
+
+  // Need to convert between systems
+  let sourceOptions: typeof paceRangeOptionsMetric;
+  if (isMetricRange) {
+    sourceOptions = paceRangeOptionsMetric;
+  } else if (isImperialRange) {
+    sourceOptions = paceRangeOptionsImperial as typeof paceRangeOptionsMetric;
+  } else {
+    return null;
+  }
+
+  const sourceRange = sourceOptions.find(opt => opt.value === paceRange);
+  if (!sourceRange || sourceRange.minutes === undefined || sourceRange.seconds === undefined) {
+    return null;
+  }
+
+  // Convert the representative pace to the target system
+  const converted = convertPace(
+    sourceRange.minutes,
+    sourceRange.seconds,
+    isMetricRange,
+    targetIsMetric
+  );
+
+  // Find the matching range in the target system
+  const targetOptions = targetIsMetric ? paceRangeOptionsMetric : paceRangeOptionsImperial;
+  return findMatchingPaceRange(converted.minutes, converted.seconds, targetOptions);
+};
+
+// Find the closest matching weight range in target system
+const findMatchingWeightRange = (
+  weight: number,
+  targetOptions: typeof weightRangeOptionsMetric
+): string | null => {
+  let closestRange: (typeof weightRangeOptionsMetric)[number] | null = null;
+  let minDiff = Infinity;
+
+  for (const range of targetOptions) {
+    if (range.average === undefined) continue;
+    const diff = Math.abs(weight - range.average);
+    if (diff < minDiff) {
+      minDiff = diff;
+      closestRange = range;
+    }
+  }
+
+  return closestRange?.value || null;
+};
+
+// Convert weight range to current system
+const convertWeightRangeToCurrentSystem = (
+  weightRange: string,
+  currentWeightUnit: string
+): string | null => {
+  if (!weightRange || weightRange.trim() === "") return null;
+
+  const isMetricRange = weightRange.startsWith("weight-kg-");
+  const isImperialRange = weightRange.startsWith("weight-lbs-");
+  const targetIsMetric = currentWeightUnit === "kg";
+
+  // If the range matches the current system, use it directly
+  if ((isMetricRange && targetIsMetric) || (isImperialRange && !targetIsMetric)) {
+    return weightRange;
+  }
+
+  // Need to convert between systems
+  let sourceOptions: typeof weightRangeOptionsMetric;
+  if (isMetricRange) {
+    sourceOptions = weightRangeOptionsMetric;
+  } else if (isImperialRange) {
+    sourceOptions = weightRangeOptionsImperial as typeof weightRangeOptionsMetric;
+  } else {
+    return null;
+  }
+
+  const sourceRange = sourceOptions.find(opt => opt.value === weightRange);
+  if (!sourceRange || sourceRange.average === undefined) {
+    return null;
+  }
+
+  // Convert the representative weight to the target system
+  let convertedWeight: number;
+  if (isMetricRange && !targetIsMetric) {
+    convertedWeight = sourceRange.average * LB_PER_KG;
+  } else {
+    convertedWeight = sourceRange.average / LB_PER_KG;
+  }
+
+  // Find the matching range in the target system
+  const targetOptions = targetIsMetric ? weightRangeOptionsMetric : weightRangeOptionsImperial;
+  return findMatchingWeightRange(convertedWeight, targetOptions);
+};
 
 export default function EditReviewDialog({ open, onClose, review, onSaved }: Props) {
   const {
@@ -268,17 +347,20 @@ export default function EditReviewDialog({ open, onClose, review, onSaved }: Pro
       : "";
 
     // Pace: use range if available, otherwise NONE
-    // Handle empty string, null, and undefined
+    // Convert to current system if needed
     let paceRangeValue = NONE_OPTION;
     if (review.paceRange && typeof review.paceRange === 'string' && review.paceRange.trim() !== "") {
-      paceRangeValue = review.paceRange.trim();
+      const convertedPaceRange = convertPaceRangeToCurrentSystem(review.paceRange.trim(), distanceUnit);
+      paceRangeValue = convertedPaceRange || review.paceRange.trim();
     }
 
     // Weight: use range if available, otherwise NONE
-    // Handle empty string, null, and undefined
-    const weightRangeValue = (review.weightRange && typeof review.weightRange === 'string' && review.weightRange.trim() !== "") 
-      ? review.weightRange.trim()
-      : NONE_OPTION;
+    // Convert to current system if needed
+    let weightRangeValue = NONE_OPTION;
+    if (review.weightRange && typeof review.weightRange === 'string' && review.weightRange.trim() !== "") {
+      const convertedWeightRange = convertWeightRangeToCurrentSystem(review.weightRange.trim(), weightUnit);
+      weightRangeValue = convertedWeightRange || review.weightRange.trim();
+    }
 
     // Set current values
     setRating(initialRating);
@@ -307,6 +389,7 @@ export default function EditReviewDialog({ open, onClose, review, onSaved }: Pro
     review,
     toDisplayDistance,
     distanceUnit,
+    weightUnit,
   ]);
 
   // Check if any fields have been changed

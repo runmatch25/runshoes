@@ -1,59 +1,67 @@
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
-import FacebookProvider from "next-auth/providers/facebook";
-import CredentialsProvider from "next-auth/providers/credentials";
+
+const googleClientId = process.env.GOOGLE_CLIENT_ID;
+const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
+
+if (!googleClientId || !googleClientSecret) {
+  throw new Error(
+    "Google OAuth env vars missing. Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET."
+  );
+}
 
 export const authOptions = {
+  secret: process.env.NEXTAUTH_SECRET,
   providers: [
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID || 'example-google-id',
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || 'example-google-secret',
+      clientId: googleClientId,
+      clientSecret: googleClientSecret,
     }),
-    FacebookProvider({
-      clientId: process.env.FACEBOOK_CLIENT_ID || 'example-facebook-id',
-      clientSecret: process.env.FACEBOOK_CLIENT_SECRET || 'example-facebook-secret',
-    }),
-    {
-      id: 'strava',
-      name: 'Strava',
-      type: 'oauth',
-      wellKnown: 'https://www.strava.com/.well-known/openid-configuration',
-      clientId: process.env.STRAVA_CLIENT_ID || 'example-strava-id',
-      clientSecret: process.env.STRAVA_CLIENT_SECRET || 'example-strava-secret',
-      authorization: { params: { scope: 'read,activity:read' } },
-      idToken: false,
-      checks: ['pkce', 'state'],
-      profile(profile) {
-        return {
-          id: profile.id,
-          name: profile.username || profile.firstname,
-          email: profile.email,
-          image: profile.profile
-        };
-      }
-    },
-    CredentialsProvider({
-      name: 'Credentials',
-      credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
-      },
-      async authorize(credentials, req) {
-        // Allow any email/password for demo
-        if (credentials?.email && credentials?.password) {
-          return { id: credentials.email, email: credentials.email, name: credentials.email };
-        }
-        return null;
-      },
-    })
   ],
   callbacks: {
-    async signIn({ user, account, email }) {
-      // Here you would check for duplicate emails with other providers (DB lookup)
-      // For demo, always return true
+    async signIn({ user, account }: { user: any; account: any }) {
+      if (account?.provider === 'google' && user?.email && user?.name) {
+        try {
+          // Call backend to create/find user and get JWT token
+          const response = await fetch('http://localhost:3001/auth/oauth', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              email: user.email,
+              name: user.name,
+            }),
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            // Store backend token in user object so we can access it in jwt callback
+            (user as any).backendToken = data.token;
+            (user as any).backendUser = data.user;
+            return true;
+          }
+          return false;
+        } catch (error) {
+          console.error('OAuth backend integration error:', error);
+          return false;
+        }
+      }
       return true;
     },
-  }
+    async jwt({ token, user }: { token: any; user: any }) {
+      if (user && (user as any).backendToken) {
+        token.backendToken = (user as any).backendToken;
+        token.backendUser = (user as any).backendUser;
+      }
+      return token;
+    },
+    async session({ session, token }: { session: any; token: any }) {
+      if (token.backendToken) {
+        (session as any).backendToken = token.backendToken;
+        (session as any).backendUser = token.backendUser;
+      }
+      return session;
+    },
+  },
 };
 
 const handler = NextAuth(authOptions);

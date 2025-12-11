@@ -231,6 +231,7 @@ export default function ReviewsPage() {
           createdAt={review.createdAt}
           updatedAt={review.updatedAt}
           userName={review.user.name}
+          userId={review.user.id}
           shoeBrand={review.shoe.brand}
           shoeModel={review.shoe.model}
           formattedDate={formatDateISOToMMDDYYYY(review.createdAt)}

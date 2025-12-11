@@ -179,6 +179,7 @@ export default function ShoeClient({ shoeId }: { shoeId: number }) {
               createdAt={r.createdAt}
               updatedAt={r.updatedAt}
               userName={r.user.name}
+              userId={r.user.id}
               shoeBrand={shoe?.brand}
               shoeModel={shoe?.model}
               formattedDate={formatDateISOToMMDDYYYY(r.createdAt)}
